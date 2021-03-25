@@ -1,22 +1,20 @@
 class Rule:
 
-    """
-    base: string,
-    replacement: string
-    """
-
     def __init__(self, base: str, replacement: str):
+        """
+        base: string,
+        replacement: string
+        """
         self.base = base
         self.replacement = replacement
 
 
-class Rules:
-
-    """
-    rules: List[Rule]
-    """
+class LSystem:
 
     def __init__(self, *rules):
+        """
+        rules: List[Rule]
+        """
         self.rules = {}
         [self.rules.update({rule.base: rule.replacement}) for rule in rules]
 

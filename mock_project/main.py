@@ -1,11 +1,11 @@
 from L_system import *
-from rand_rules import *
+from rhythm_toolkit import *
+from depot_ideas import *
 
-initial = "F-F-F-F"
-rule = Rule("F", "F-F+F+FF-F-F+F")
+string_res = run_abcde_for(3)
+sequence = sequence_from_string_abcde(string_res)
+print(sequence)
+rhythm = rhythm_from_sequence(sequence, '4/4')
+# rhythm.show() # starts music21
+rhythm.write('midi', 'midi/abcde.midi')
 
-rules = Rules(rule)
-print(rules.run(initial, 2, show_mode=True))
-
-##TODO mostly just translate L system to rhythm + superposer une ligne rythmique avec 4 lignes mélodiques (encodées comme
-##tableaux d'ints + règle de conversion int <-> pitch)
