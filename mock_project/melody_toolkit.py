@@ -12,18 +12,6 @@ def translate(int_note, duration):
     return note.Note('C4', duration=duration)
 
 
-class Voice:
-
-    def __init__(self, *notes: list):
-        """
-        Instantiate a Voice object: essentially an array of integers
-        """
-        self.notes = notes
-
-    def append(self, note):
-        self.notes.append(note)
-
-
 def combine_voices(length: int, rhythm, *voices):
     """
     :param length: common length of voices to consider
