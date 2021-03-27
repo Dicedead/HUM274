@@ -2,10 +2,6 @@ from music21 import note, stream, duration, instrument
 from harmonization import Chord
 
 
-def translate_chord(chord: Chord):
-    return 0
-
-
 def translate(int_note, dur):
     """
     Given an integer value of a note, get a corresponding music21.note object
