@@ -182,7 +182,7 @@ def filter_w_rules(current_chord_list, options):
         seventh_active = (prev_fundamental == SOL or prev_fundamental == SI) \
                          and (fundamental == DO or fundamental == FA or fundamental == LA)
 
-        for i, note in current_chord_list:
+        for i, note in enumerate(current_chord_list):
             if not (note % 12 == SI and chord_i[i] % 12 != DO and seventh_active):
                 temp3.append(chord_i)
 
@@ -234,7 +234,7 @@ def filter_w_rules(current_chord_list, options):
     # rule 8 : forth augmented interval not allowed
     temp8 = []
     for chord_i in temp7:
-        for i, note in current_chord_list:
+        for i, note in enumerate(current_chord_list):
             if not (note % 12 == FA and chord_i[i] % 12 == SI):
                 temp8.append(chord_i)
 
@@ -242,8 +242,8 @@ def filter_w_rules(current_chord_list, options):
     temp9 = []
     for chord_i in temp8:
         int_problem = False
-        for i, note_i in current_chord_list:
-            for j, note_j in current_chord_list[i:]:
+        for i, note_i in enumerate(current_chord_list):
+            for j, note_j in enumerate(current_chord_list[i:]):
                 if i != j:
                     interval_current = (note_j % 12) - (note_i % 12)
                     interval_next = (chord_i[j] % 12) - (chord_i[i] % 12)
@@ -257,8 +257,8 @@ def filter_w_rules(current_chord_list, options):
     temp10 = []
     for chord_i in temp9:
         int_problem = False
-        for i, note_i in current_chord_list:
-            for j, note_j in current_chord_list[i:]:
+        for i, note_i in enumerate(current_chord_list):
+            for j, note_j in enumerate(current_chord_list[i:]):
                 interval_next = (chord_i[j] % 12) - (chord_i[i] % 12)
                 change_chords_i = chord_i[i] - note_i
                 change_chords_j = chord_i[j] - note_j
@@ -272,7 +272,7 @@ def filter_w_rules(current_chord_list, options):
 
     # TODO rule 11: seventh note in the soprano if it is the final cadence
 
-    return temp10
+    return temp3
 
 
 transition = {}  # dictionary that includes transitions from a chord and a bass note to all the possibilities
