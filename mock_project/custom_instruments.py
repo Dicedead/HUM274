@@ -1,7 +1,7 @@
 from music21 import instrument
 
 
-class Underwater(instrument.Instrument):
+class Underwater(instrument.KeyboardInstrument):
     def __init__(self):
         super().__init__()
         self.instrumentName = 'Clavichord'

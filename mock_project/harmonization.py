@@ -347,5 +347,6 @@ def compose():
 # intervales interdits
 # quintes consecutives /!\ 4e 5e octaves
 
-returned = compose()
-print(returned)
+if __name__ == '__main__':
+    returned = compose()
+    print(returned)
