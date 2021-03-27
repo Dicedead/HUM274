@@ -7,7 +7,7 @@ i.e. there are no inversions.
 The chords are only formed with fifths, i.e., we do not use seventh or ninth chords.
 
 For the final project, we could implement a much more complex algorithm and objects in order to achieve a bigger variety
-of better armonizations: we could establish less assumptions and add more rules.
+of better harmonizations: we could establish less assumptions and add more rules.
 """
 
 DO = 0
@@ -27,12 +27,27 @@ class Chord:
         self.a = a
         self.s = s
 
+    empty = __init__(-1, -1, -1, -1)
+
     def simplify(self):
         reduced = [self.b % 12, self.t % 12, self.a % 12, self.s % 12]
         return sorted(list(set(reduced)))
 
     def fundamental(self):
         return self.b
+
+    def includes(self, note: int):
+        return self.b == note or self.t == note or self.a == note or self.s == note
+
+    def to_list(self):
+        return [self.b, self.t, self.a , self.s]
+
+    @staticmethod
+    def of(chord_list):
+        if len(chord_list) == 4:
+            return Chord(chord_list[0], chord_list[1], chord_list[2], chord_list[3])
+        else:
+            return Chord.empty
 
     def check_ranges(self):
         abs_range_b: bool = DO <= self.b <= DO + 2 * OCTAVE
@@ -46,14 +61,17 @@ class Chord:
 
         return absolute_ranges and inter_ranges
 
-    empty = __init__(-1, -1, -1, -1)
 
 
 class SimplifiedChord:
     def __init__(self, fundamental: int, third: int, fifth: int):
         self.fundamental = fundamental
         self.third = third
-        self.fifth: fifth
+        self.fifth = fifth
+
+    def includes(self, note: int):
+        new_note = note % 12
+        return self.fundamental == new_note or self.third == new_note or self.fifth == new_note
 
     Do = __init__(DO, MI, SOL)
     Re = __init__(RE, FA, LA)
@@ -103,6 +121,22 @@ class Empty(ChordTree):
         super().__init__(Chord.empty, depth)
 
 
+def duplicate_third(next_chord_list, next_simple_chord):
+    for i, note in next_chord_list:
+        if i != 0 and note == -1:
+            if next_simple_chord[0] == SI:
+
+
+def complete_transition(next_chord_list, next_simple_chord):
+    for i, note in next_chord_list:
+        if note == -1:
+            if next_simple_chord[0] == SI:
+
+
+
+
+
+
 def next_chords(current_chord: Chord, next_note: int):
     """
     Returns the all the possible chords that can be harmonised from a bass note and the current chord.
@@ -116,10 +150,25 @@ def next_chords(current_chord: Chord, next_note: int):
         options = []
 
         # Keep common notes
-        next_chord = Chord.empty
+        current_chord_list = current_chord.to_list
+        next_chord_list = []
         next_simple_chord = SimplifiedChord.of(next_note)
 
-        ...
+        if current_chord.fundamental() == next_note:
+            options.append(current_chord)
+
+        else:
+            for i, note in current_chord_list:
+                if next_simple_chord.includes(note):
+                    next_chord_list[i] = note
+                else:
+                    next_chord_list[i] = -1
+            next_chord_list
+
+
+
+
+
 
 
 def compose(initial_chord: Chord, bass_line: list, empty_composition_tree: ChordTree):
