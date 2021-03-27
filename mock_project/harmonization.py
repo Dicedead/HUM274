@@ -7,8 +7,10 @@ i.e. there are no inversions.
 The chords are only formed with fifths, i.e., we do not use seventh or ninth chords.
 
 For the final project, we could implement a much more complex algorithm and objects in order to achieve a bigger variety
-of better harmonizations: we could establish less assumptions and add more rules.
+of better harmonizations: we could establish less assumptions and add more rules
 """
+
+import itertools
 
 DO = 0
 RE = 2
@@ -19,6 +21,19 @@ LA = 9
 SI = 11
 OCTAVE = 12
 
+EPSILON = 7  # allowed delta between two notes when looking for a transition
+
+
+class SimplifiedChord:
+    def __init__(self, fundamental: int, third: int, fifth: int):
+        self.fundamental = fundamental
+        self.third = third
+        self.fifth = fifth
+
+    def includes(self, note: int):
+        new_note = note % 12
+        return self.fundamental == new_note or self.third == new_note or self.fifth == new_note
+
 
 class Chord:
     def __init__(self, b: int, t: int, a: int, s: int):
@@ -27,7 +42,13 @@ class Chord:
         self.a = a
         self.s = s
 
-    empty = __init__(-1, -1, -1, -1)
+    @staticmethod
+    def of_tuple(notes):
+        return Chord(notes[0], notes[1], notes[2], notes[3])
+
+    @staticmethod
+    def empty():
+        return Chord(-1, -1, -1, -1)
 
     def simplify(self):
         reduced = [self.b % 12, self.t % 12, self.a % 12, self.s % 12]
@@ -40,14 +61,14 @@ class Chord:
         return self.b == note or self.t == note or self.a == note or self.s == note
 
     def to_list(self):
-        return [self.b, self.t, self.a , self.s]
+        return [self.b, self.t, self.a, self.s]
 
     @staticmethod
     def of(chord_list):
         if len(chord_list) == 4:
             return Chord(chord_list[0], chord_list[1], chord_list[2], chord_list[3])
         else:
-            return Chord.empty
+            return Chord.empty()
 
     def check_ranges(self):
         abs_range_b: bool = DO <= self.b <= DO + 2 * OCTAVE
@@ -61,25 +82,13 @@ class Chord:
 
         return absolute_ranges and inter_ranges
 
-
-
-class SimplifiedChord:
-    def __init__(self, fundamental: int, third: int, fifth: int):
-        self.fundamental = fundamental
-        self.third = third
-        self.fifth = fifth
-
-    def includes(self, note: int):
-        new_note = note % 12
-        return self.fundamental == new_note or self.third == new_note or self.fifth == new_note
-
-    Do = __init__(DO, MI, SOL)
-    Re = __init__(RE, FA, LA)
-    Mi = __init__(MI, SOL, SI)
-    Fa = __init__(FA, LA, DO)
-    Sol = __init__(SOL, SI, RE)
-    La = __init__(LA, DO, MI)
-    Si = __init__(SI, RE, FA)
+    Do = SimplifiedChord(DO, MI, SOL)
+    Re = SimplifiedChord(RE, FA, LA)
+    Mi = SimplifiedChord(MI, SOL, SI)
+    Fa = SimplifiedChord(FA, LA, DO)
+    Sol = SimplifiedChord(SOL, SI, RE)
+    La = SimplifiedChord(LA, DO, MI)
+    Si = SimplifiedChord(SI, RE, FA)
 
     mapping = {
         DO: Do,
@@ -92,8 +101,11 @@ class SimplifiedChord:
     }
 
     @staticmethod
-    def of(fundamental: int):
-        return SimplifiedChord.mapping.get(fundamental % 12, -1)
+    def simple_of(fundamental: int):
+        return Chord.mapping[fundamental % 12]
+
+    def __str__(self):
+        return "Chord (b:{}, t:{}, a:{}, s:{})".format(self.b,self.t,self.a,self.s)
 
 
 class ChordTree:
@@ -118,19 +130,62 @@ class Leaf(ChordTree):
 
 class Empty(ChordTree):
     def __init(self, depth: int):
-        super().__init__(Chord.empty, depth)
+        super().__init__(Chord.empty(), depth)
 
 
-def duplicate_third(next_chord_list, next_simple_chord):
-    for i, note in next_chord_list:
-        if i != 0 and note == -1:
-            if next_simple_chord[0] == SI:
+# TODO decomment
+# def duplicate_third(next_chord_list, next_simple_chord):
+#     for i, note in next_chord_list:
+#         if i != 0 and note == -1:
+#             if next_simple_chord[0] == SI:
 
 
-def complete_transition(next_chord_list, next_simple_chord):
-    for i, note in next_chord_list:
+def all_options(tas_options):
+    return itertools.product(*tas_options)
+
+
+def all_in_epsilon(note):
+    return range(max(0, note - EPSILON), note + EPSILON + 1)
+
+
+def complete_transition(current_chord_list, next_chord_list,
+                        next_simple_chord):  # check size of epsilon -> handle cases with -1 left
+    btas_options = []
+
+    for i, note in zip(range(len(next_chord_list)), next_chord_list):
         if note == -1:
-            if next_simple_chord[0] == SI:
+            btas_options.append(list(filter(lambda x: next_simple_chord.includes(x),
+                                            list(all_in_epsilon(current_chord_list[i])))))  # add outer list
+        else:
+            btas_options.append([note])
+
+    return all_options(btas_options)
+
+
+def filter_w_rules(current_chord_list, options):
+    # rule (no duplicate of sensitive)
+    temp1 = []
+    for chord_i in options:
+        ack = 0
+        for note in chord_i:
+            if note % 12 == SI:
+                ack += 1
+        if 0 <= ack < 2:
+            temp1.append(chord_i)
+
+    temp2 = []
+
+    for chord_i in temp1:
+        if Chord.of_tuple(chord_i).check_ranges():
+            temp2.append(chord_i)
+
+    # temp = filter(lambda x: x == 0, options)
+    # # rule2
+    # temp = filter(lambda x: x == 0, temp)
+    # # rule3
+    # temp = filter(lambda x: x == 0, temp)
+
+    return temp2
 
 
 
@@ -148,27 +203,24 @@ def next_chords(current_chord: Chord, next_note: int):
     else:
 
         options = []
-
         # Keep common notes
-        current_chord_list = current_chord.to_list
-        next_chord_list = []
-        next_simple_chord = SimplifiedChord.of(next_note)
+        current_chord_list = current_chord.to_list()
+        next_chord_list = [next_note]
+        next_simple_chord = Chord.simple_of(next_note)
 
         if current_chord.fundamental() == next_note:
-            options.append(current_chord)
-
+            options.append(current_chord.to_list())
         else:
-            for i, note in current_chord_list:
+            for note in current_chord_list[1:]:
                 if next_simple_chord.includes(note):
-                    next_chord_list[i] = note
+                    next_chord_list.append(note)
                 else:
-                    next_chord_list[i] = -1
-            next_chord_list
+                    next_chord_list.append(-1)
 
+            options = filter_w_rules(current_chord_list,
+                                     complete_transition(current_chord_list, next_chord_list, next_simple_chord))
 
-
-
-
+        return options
 
 
 def compose(initial_chord: Chord, bass_line: list, empty_composition_tree: ChordTree):
@@ -178,10 +230,27 @@ def compose(initial_chord: Chord, bass_line: list, empty_composition_tree: Chord
     """
 
 
-start_chord = Chord(0, 3, 5, 8)
-
-Bass = (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+start_chord = Chord(DO, DO + 2 * OCTAVE, SOL + 2 * OCTAVE, MI + 3 * OCTAVE)
+Bass = [DO, FA, SOL, SI, DO, DO, LA, FA, SOL, SOL, DO, FA, SOL, DO, DO, DO]
 
 transition = {}  # dictionary that includes transitions from a chord and a bass note to all the possibilities
 
-compositionTree = Node(start_chord, 1, next_chords(start_chord))
+actual_chord = start_chord
+succession = []
+for root in Bass[1:]:
+    succession.append(actual_chord)
+    print(actual_chord)
+    actual_chord = next_chords(actual_chord, root)[0]
+    actual_chord = Chord(actual_chord[0], actual_chord[1], actual_chord[2], actual_chord[3])
+
+compositionTree = Node(start_chord, 1, next_chords(start_chord, Bass[1]))
+
+
+
+# 1. conserver les mêmes notes
+# 2. aller vers la plus proche
+# ---
+# 3. duplication de la fondamentale / rôle des note dans la gamme
+# sensible -> vers do (jamais dupliquée)
+# intervales interdits
+# quintes consecutives /!\ 4e 5e octaves
