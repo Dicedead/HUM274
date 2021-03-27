@@ -193,6 +193,8 @@ def filter_w_rules(current_chord_list, options):
     return temp2
 
 
+transition = {}  # dictionary that includes transitions from a chord and a bass note to all the possibilities
+
 def next_chords(current_chord: Chord, next_note: int):
     """
     Returns the all the possible chords that can be harmonised from a bass note and the current chord.
@@ -224,27 +226,23 @@ def next_chords(current_chord: Chord, next_note: int):
         return options
 
 
-def compose(initial_chord: Chord, bass_line: list, empty_composition_tree: ChordTree):
-    """
+def compose():
+    """ back in params -> initial_chord: Chord, bass_line: list, empty_composition_tree: ChordTree
     Recursive function that from an initial chord, a bass line and an empty composition tree
     creates a composition tree with all the possible harmonizations.
     """
+    start_chord = Chord(DO, DO + 2 * OCTAVE, SOL + 2 * OCTAVE, MI + 3 * OCTAVE)
+    Bass = [DO, FA, SOL, SI, DO, DO, LA, FA, SOL, SOL, DO, FA, SOL, DO, DO,
+    actual_chord = start_chord
+    succession = []
+    for root in Bass[1:]:
+        succession.append(actual_chord)
+        print(actual_chord)
+        actual_chord = next_chords(actual_chord, root)[0]
+        actual_chord = Chord(actual_chord[0], actual_chord[1], actual_chord[2], actual_chord[3])
 
-
-start_chord = Chord(DO, DO + 2 * OCTAVE, SOL + 2 * OCTAVE, MI + 3 * OCTAVE)
-Bass = [DO, FA, SOL, SI, DO, DO, LA, FA, SOL, SOL, DO, FA, SOL, DO, DO, DO]
-
-transition = {}  # dictionary that includes transitions from a chord and a bass note to all the possibilities
-
-actual_chord = start_chord
-succession = []
-for root in Bass[1:]:
-    succession.append(actual_chord)
-    print(actual_chord)
-    actual_chord = next_chords(actual_chord, root)[0]
-    actual_chord = Chord(actual_chord[0], actual_chord[1], actual_chord[2], actual_chord[3])
-
-compositionTree = Node(start_chord, 1, next_chords(start_chord, Bass[1]))
+    compositionTree = Node(start_chord, 1, next_chords(start_chord, Bass[1]))
+    return succession
 
 
 
