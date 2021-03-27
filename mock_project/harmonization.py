@@ -232,7 +232,7 @@ def compose():
     creates a composition tree with all the possible harmonizations.
     """
     start_chord = Chord(DO, DO + 2 * OCTAVE, SOL + 2 * OCTAVE, MI + 3 * OCTAVE)
-    Bass = [DO, FA, SOL, SI, DO, DO, LA, FA, SOL, SOL, DO, FA, SOL, DO, DO,
+    Bass = [DO, FA, SOL, SI, DO, DO, LA, FA, SOL, SOL, DO, FA, SOL, DO, DO]
     actual_chord = start_chord
     succession = []
     for root in Bass[1:]:
@@ -242,7 +242,20 @@ def compose():
         actual_chord = Chord(actual_chord[0], actual_chord[1], actual_chord[2], actual_chord[3])
 
     compositionTree = Node(start_chord, 1, next_chords(start_chord, Bass[1]))
-    return succession
+
+
+    bass = []
+    tenor = []
+    alto = []
+    soprano = []
+
+    for chord in succession:
+        bass.append(chord.b)
+        tenor.append(chord.t)
+        alto.append(chord.a)
+        soprano.append(chord.s)
+
+    return [bass,tenor,alto,soprano]
 
 
 
@@ -254,3 +267,6 @@ def compose():
 # sensible -> vers do (jamais dupliquée)
 # intervales interdits
 # quintes consecutives /!\ 4e 5e octaves
+
+returned = compose()
+print(returned)
