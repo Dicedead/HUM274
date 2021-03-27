@@ -19,12 +19,12 @@ def run_basic_for(n, show_mode=False):
 
 
 def rules_complex():
-    rule_a = Rule("A", "BBF+E-D+A]FF")
-    rule_b = Rule("B", "D[E-C")
+    rule_a = Rule("A", "BB[F+E-D+A]FF")
+    rule_b = Rule("B", "D[E]-C""D[E]-C")
     rule_c = Rule("C", "CD+C-CF-")
     rule_d = Rule("D", "AE+[D-D]D+ED")
-    rule_e = Rule("E", "E+-]B")
-    rule_f = Rule("F", "F+-B]B[[A]EF")
+    rule_e = Rule("E", "[E+-]B")
+    rule_f = Rule("F", "F+[-B]B[[A]EF]")
     return LSystem(rule_a, rule_b, rule_c, rule_d, rule_e, rule_f)
 
 

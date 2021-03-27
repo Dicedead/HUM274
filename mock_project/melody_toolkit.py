@@ -1,5 +1,4 @@
 from music21 import note, stream, duration, instrument
-from harmonization import Chord
 
 
 def translate(int_note, dur):
@@ -9,9 +8,9 @@ def translate(int_note, dur):
     :param dur: duration of desired note
     :return music21.note
     """
-    # TODO implement between these lines, in accordance to harmonization.py
-    pitch = 'C2'
-    # TODO implement
+    first_char_arr = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+    pitch = first_char_arr[int_note % 12] + str(int(2+int_note/12))
+    print(pitch)
 
     if dur < 0:
         return note.Rest(duration=duration.Duration(quarterLength=-dur))
