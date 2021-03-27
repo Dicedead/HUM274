@@ -8,12 +8,16 @@ def translate(int_note, dur):
     :param dur: duration of desired note
     :return music21.note
     """
-    # TODO implement
+    # TODO implement between these lines, in accordance to harmonization.py
     pitch = 'C4'
     if int_note % 3 == 0:
         pitch = 'E5'
     elif int_note % 3 == 1:
         pitch = 'D2'
+    # TODO implement
+
+    if dur < 0:
+        return note.Rest(duration=duration.Duration(quarterLength=-dur))
     return note.Note(pitch, duration=duration.Duration(quarterLength=dur))
 
 
