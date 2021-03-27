@@ -6,6 +6,10 @@ from music21 import midi, note, stream, instrument, meter, key
 UNIT = 1/4  # durations expressed as UNIT * (whole note) (currently: quarter note)
 
 
+def get_quarter_length():
+    return UNIT
+
+
 def percussion_hit(duration, pitch="C4"):
     # Create Note object for percussion hits (default pitch is C4)
     return note.Note(pitch, quarterLength=duration * (4 * UNIT))
