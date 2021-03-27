@@ -144,6 +144,9 @@ class Empty(ChordTree):
     def __init(self, depth: int):
         super().__init__(Chord.empty(), depth)
 
+    def __str__(self):
+        print("Empty")
+
 
 def all_options(tas_options):
     return itertools.product(*tas_options)
@@ -284,7 +287,7 @@ def filter_w_rules(current_chord_list, options):
 
     # TODO rule 11: seventh note in the soprano if it is the final cadence
 
-    return temp3
+    return options
 
 
 transition = {}  # dictionary that includes transitions from a chord and a bass note to all the possibilities
@@ -294,10 +297,10 @@ def next_chords(current_chord: Chord, next_note: int):
     """
     Returns the all the possible chords that can be harmonised from a bass note and the current chord.
     """
-    options = transition.get(current_chord)
+    options = transition.get((current_chord, next_note))
 
     if options is not None:
-        return list(options)
+        return options
     else:
 
         options = []
@@ -323,7 +326,8 @@ def next_chords(current_chord: Chord, next_note: int):
 
 
 start_chord = Chord(DO, DO + 2 * OCTAVE, SOL + 2 * OCTAVE, MI + 3 * OCTAVE)
-bass = [DO, FA, SOL, SI, DO, DO, LA, FA, SOL, SOL, DO, FA, SOL, DO, DO]
+# bass = [DO, FA, SOL, SI, DO, DO, LA, FA, SOL, SOL, DO, FA, SOL, DO, DO]
+bass = [DO, FA, SOL]
 compositionTree = Node(start_chord, 1, [])
 
 
@@ -332,7 +336,8 @@ def compose(initial_chord, bass_line, prev_chord_tree: Node):
     Recursive function that from an initial chord, a bass line and an empty composition tree
     creates a composition tree with all the possible harmonizations.
     """
-    if len(bass_line) > 1:
+    # initial_chord = tuple(initial_chord.to_list())
+    if len(bass_line) > 0:
         list_next_chords = next_chords(initial_chord, bass_line[0])
 
         for chord in list_next_chords:
@@ -371,6 +376,7 @@ def to_arrays(path):
 """
 
 compose(start_chord, bass, compositionTree)
+print(compositionTree)
 
 # conserver les mêmes notes
 # aller vers la plus proche
