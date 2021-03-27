@@ -10,11 +10,7 @@ def translate(int_note, dur):
     :return music21.note
     """
     # TODO implement between these lines, in accordance to harmonization.py
-    pitch = 'C4'
-    if int_note % 3 == 0:
-        pitch = 'E5'
-    elif int_note % 3 == 1:
-        pitch = 'D2'
+    pitch = 'C2'
     # TODO implement
 
     if dur < 0:

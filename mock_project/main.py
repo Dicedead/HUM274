@@ -14,8 +14,8 @@ sequence = sequence_from_string_complex(string_res)
 
 
 some_length = len(sequence)
-part = combine_voices(some_length, sequence,
-                      [[randint(0, some_length) for i in range(some_length)] for j in range(2)],
-                      [Underwater(), instrument.Piano()])
-part.write('midi', 'midi/test_instrument.mid')
+parts = combine_voices(some_length, sequence,
+                       [[randint(0, some_length) for i in range(some_length)] for j in range(2)],
+                       inst=[Underwater(), Underwater()])
+parts.write('midi', 'midi/test_instrument.mid')
 print("Done!")
