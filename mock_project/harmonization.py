@@ -163,7 +163,8 @@ def complete_transition(current_chord_list, next_chord_list,
 
 
 def filter_w_rules(current_chord_list, options):
-    # rule (no duplicate of sensitive)
+
+    # rule 1 (no duplicate of sensitive)
     temp1 = []
     for chord_i in options:
         ack = 0
@@ -173,11 +174,15 @@ def filter_w_rules(current_chord_list, options):
         if 0 <= ack < 2:
             temp1.append(chord_i)
 
+    # rule 2 (accords in range)
     temp2 = []
-
     for chord_i in temp1:
         if Chord.of_tuple(chord_i).check_ranges():
             temp2.append(chord_i)
+
+    # temp3 = []
+    # for chord_i in options
+
 
     # temp = filter(lambda x: x == 0, options)
     # # rule2
