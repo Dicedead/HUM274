@@ -243,6 +243,7 @@ compositionTree = Node(start_chord, 1, next_chords(start_chord, Bass[1]))
 
 
 
+
 # 1. conserver les mêmes notes
 # 2. aller vers la plus proche
 # ---
