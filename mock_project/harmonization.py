@@ -105,7 +105,7 @@ class Chord:
         return Chord.mapping[fundamental % 12]
 
     def __str__(self):
-        return "Chord (b:{}, t:{}, a:{}, s:{})".format(self.b,self.t,self.a,self.s)
+        return "Chord (b:{}, t:{}, a:{}, s:{})".format(self.b, self.t, self.a, self.s)
 
 
 class ChordTree:
@@ -163,7 +163,6 @@ def complete_transition(current_chord_list, next_chord_list,
 
 
 def filter_w_rules(current_chord_list, options):
-
     # rule 1 (no duplicate of sensitive)
     temp1 = []
     for chord_i in options:
@@ -180,20 +179,18 @@ def filter_w_rules(current_chord_list, options):
         if Chord.of_tuple(chord_i).check_ranges():
             temp2.append(chord_i)
 
-    # temp3 = []
-    # for chord_i in options
+    # rule 3 (sensitive goes to do)
+    temp3 = []
+    for chord_i in temp2:
+        for i, note in current_chord_list:
+            if not (note % 12 == SI and chord_i[i] % 12 != DO):
+                temp3.append(chord_i)
 
-
-    # temp = filter(lambda x: x == 0, options)
-    # # rule2
-    # temp = filter(lambda x: x == 0, temp)
-    # # rule3
-    # temp = filter(lambda x: x == 0, temp)
-
-    return temp2
+    return temp3
 
 
 transition = {}  # dictionary that includes transitions from a chord and a bass note to all the possibilities
+
 
 def next_chords(current_chord: Chord, next_note: int):
     """
@@ -243,7 +240,6 @@ def compose():
 
     compositionTree = Node(start_chord, 1, next_chords(start_chord, Bass[1]))
 
-
     bass = []
     tenor = []
     alto = []
@@ -255,9 +251,7 @@ def compose():
         alto.append(chord.a)
         soprano.append(chord.s)
 
-    return [bass,tenor,alto,soprano]
-
-
+    return [bass, tenor, alto, soprano]
 
 
 # 1. conserver les mêmes notes
