@@ -342,10 +342,10 @@ def compose():
 
 # conserver les mêmes notes
 # aller vers la plus proche
-# TODO duplication de la fondamentale / rôle des notes dans la gamme
+# duplication de la fondamentale / rôle des notes dans la gamme
 # sensible vers do et jamais dupliquée
-# TODO intervales interdits
-# TODO quintes consecutives /!\ 4e 5e octaves
+# intervales interdits
+# quintes consecutives /!\ 4e 5e octaves
 
 returned = compose()
 print(returned)
