@@ -78,7 +78,7 @@ class Chord:
 
         absolute_ranges: bool = abs_range_b and abs_range_t and abs_range_a and abs_range_s
 
-        inter_ranges: bool = (self.s - self.a <= 9) and (self.a - self.t <= 9) and (self.t - self.b <= 15)
+        inter_ranges: bool = (self.s - self.a <= 14) and (self.a - self.t <= 14) and (self.t - self.b <= 24)
 
         return absolute_ranges and inter_ranges
 
@@ -186,10 +186,6 @@ def filter_w_rules(current_chord_list, options):
     # temp = filter(lambda x: x == 0, temp)
 
     return temp2
-
-
-
-
 
 
 def next_chords(current_chord: Chord, next_note: int):
