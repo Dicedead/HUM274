@@ -46,6 +46,15 @@ class Chord:
     def of_tuple(notes):
         return Chord(notes[0], notes[1], notes[2], notes[3])
 
+    def __eq__(self, that):
+        if isinstance(that, Chord):
+            return self.b == that.b and self.t == that.t and self.a == that.a and self.s == that.s
+        else:
+            return False
+
+    def __hash__(self):
+        return hash((self.b, self.t, self.a, self.s))
+
     @staticmethod
     def empty():
         return Chord(-1, -1, -1, -1)
@@ -114,18 +123,21 @@ class ChordTree:
         self.depth = depth
 
 
-class Node(ChordTree):
-    def __init__(self, root: Chord, depth: int, leaves: list):
-        super().__init__(root, depth)
-        self.leaves = leaves
-
-    def add_leaves(self, leaves: list):
-        self.leaves.extend(leaves)
-
-
 class Leaf(ChordTree):
     def __init__(self, root: Chord, depth: int):
         super().__init__(root, depth)
+
+
+class Node(ChordTree):
+    def __init__(self, root: Chord, depth: int, children: list):
+        super().__init__(root, depth)
+        self.children = children
+
+    def add_child(self, child):
+        self.children.append(child)
+
+    def add_children(self, children):
+        self.children.extend(children)
 
 
 class Empty(ChordTree):
@@ -282,10 +294,10 @@ def next_chords(current_chord: Chord, next_note: int):
     """
     Returns the all the possible chords that can be harmonised from a bass note and the current chord.
     """
-    options = transition.get((current_chord, next_note))
+    options = transition.get(current_chord)
 
     if options is not None:
-        return options
+        return list(options)
     else:
 
         options = []
@@ -306,25 +318,43 @@ def next_chords(current_chord: Chord, next_note: int):
             options = filter_w_rules(current_chord_list,
                                      complete_transition(current_chord_list, next_chord_list, next_simple_chord))
 
+        transition[current_chord] = tuple(options)
         return options
 
 
-def compose():
-    """ back in params -> initial_chord: Chord, bass_line: list, empty_composition_tree: ChordTree
+start_chord = Chord(DO, DO + 2 * OCTAVE, SOL + 2 * OCTAVE, MI + 3 * OCTAVE)
+bass = [DO, FA, SOL, SI, DO, DO, LA, FA, SOL, SOL, DO, FA, SOL, DO, DO]
+compositionTree = Node(start_chord, 1, [])
+
+
+def compose(initial_chord, bass_line, prev_chord_tree: Node):
+    """
     Recursive function that from an initial chord, a bass line and an empty composition tree
     creates a composition tree with all the possible harmonizations.
     """
-    start_chord = Chord(DO, DO + 2 * OCTAVE, SOL + 2 * OCTAVE, MI + 3 * OCTAVE)
-    bass = [DO, FA, SOL, SI, DO, DO, LA, FA, SOL, SOL, DO, FA, SOL, DO, DO]
-    actual_chord = start_chord
-    succession = []
+    if len(bass_line) > 1:
+        list_next_chords = next_chords(initial_chord, bass_line[0])
 
+        for chord in list_next_chords:
+            node = Node(chord, prev_chord_tree.depth + 1, [])
+            prev_chord_tree.add_child(node)
+            compose(chord, bass_line[1:], node)
+
+    else:
+        if len(bass_line) == 1:
+            list_next_chords = next_chords(initial_chord, bass_line[0])
+
+            for chord in list_next_chords:
+                leaf = Leaf(chord, prev_chord_tree.depth + 1)
+                prev_chord_tree.add_child(leaf)
+
+
+"""
+def to_arrays(path):
     for root in bass[1:]:
         succession.append(actual_chord)
         actual_chord = next_chords(actual_chord, root)[0]
         actual_chord = Chord(actual_chord[0], actual_chord[1], actual_chord[2], actual_chord[3])
-
-    compositionTree = Node(start_chord, 1, next_chords(start_chord, bass[1]))
 
     bass = []
     tenor = []
@@ -338,7 +368,9 @@ def compose():
         soprano.append(chord.s)
 
     return [bass, tenor, alto, soprano]
+"""
 
+compose(start_chord, bass, compositionTree)
 
 # conserver les mêmes notes
 # aller vers la plus proche
@@ -346,6 +378,3 @@ def compose():
 # sensible vers do et jamais dupliquée
 # intervales interdits
 # quintes consecutives /!\ 4e 5e octaves
-
-returned = compose()
-print(returned)
