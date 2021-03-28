@@ -11,7 +11,6 @@ of better harmonizations: we could establish less assumptions and add more rules
 """
 
 from itertools import product
-from copy import deepcopy
 
 DO = 0
 RE = 2
