@@ -201,7 +201,7 @@ def complete_transition(current_chord_list, next_chord_list,
     return all_options(btas_options)
 
 
-def filter_w_rules(current_chord_list, options):
+def filter_w_rules(current_chord_list, options, is_cadence: bool):
     # return options
     # rule 1 : no duplicate of the seventh note
     temp1 = set()
@@ -226,7 +226,7 @@ def filter_w_rules(current_chord_list, options):
         fundamental = Chord.simple_of(chord_i[0]).fundamental
 
         seventh_active = (prev_fundamental == SOL or prev_fundamental == SI) \
-                         and (fundamental == DO or fundamental == FA or fundamental == LA)
+                            and (fundamental == DO or fundamental == FA or fundamental == LA)
 
         for i, note in enumerate(current_chord_list):
             if not (note % 12 == SI and chord_i[i] % 12 != DO and seventh_active):
@@ -318,15 +318,22 @@ def filter_w_rules(current_chord_list, options):
         if not int_problem:
             temp10.add(chord_i)
 
-    # rule 11: seventh note in the soprano if it is the final cadence
+    # rule 11: seventh note and tonic note in the soprano if it is the final cadence
+    temp11 = set()
+    if (not is_cadence) or current_chord_list[0] % 12 == SI:
+        return temp10
+    else:
+        for chord_i in temp10:
+            if current_chord_list[3] % 12 == SI and chord_i[3] % 12 == DO:
+                temp11.add(chord_i)
 
-    return temp10
+    return temp11
 
 
 transition = {}  # dictionary that includes transitions from a chord and a bass note to all the possibilities
 
 
-def next_chords(current_chord: Chord, next_note: int):
+def next_chords(current_chord: Chord, next_note: int, is_cadence: bool):
     global transition
     """
     Returns the all the possible chords that can be harmonised from a bass note and the current chord.
@@ -358,7 +365,8 @@ def next_chords(current_chord: Chord, next_note: int):
                     next_chord_list.append(-1)
 
             options = filter_w_rules(current_chord_list,
-                                     complete_transition(current_chord_list, next_chord_list, next_simple_chord))
+                                     complete_transition(current_chord_list, next_chord_list, next_simple_chord),
+                                     is_cadence)
 
         transition[(current_chord, next_note)] = tuple(opt for opt in options)
         return transition[(current_chord, next_note)]
@@ -371,7 +379,7 @@ def compose(initial_chord, bass_line, prev_chord_tree: Node):
     """
 
     if len(bass_line) > 1:
-        list_next_chords = next_chords(initial_chord, bass_line[0])
+        list_next_chords = next_chords(initial_chord, bass_line[0], False)
 
         for chord in list_next_chords:
             chord_type = Chord(chord[0], chord[1], chord[2], chord[3])
@@ -381,7 +389,7 @@ def compose(initial_chord, bass_line, prev_chord_tree: Node):
 
     else:
         if len(bass_line) == 1:
-            list_next_chords = next_chords(initial_chord, bass_line[0])
+            list_next_chords = next_chords(initial_chord, bass_line[0], True)
 
             for chord in list_next_chords:
                 chord_type = Chord(chord[0], chord[1], chord[2], chord[3])
@@ -391,7 +399,7 @@ def compose(initial_chord, bass_line, prev_chord_tree: Node):
 
 if __name__ == '__main__':
     start_chord = Chord(DO, DO + 2 * OCTAVE, SOL + 2 * OCTAVE, MI + 3 * OCTAVE)
-    bass_line = [DO, FA, SOL, SI, DO, DO, LA, FA, SOL, SOL, DO, FA, SOL, DO, DO]
+    bass_line = [DO, FA, SOL, SI, DO, FA, LA, FA, SOL, SI, DO, FA, DO, SOL, SOL, DO]
     # bass_line = [DO, FA, SOL, SI, DO, DO, LA]
     compositionTree = Node(start_chord, 1, [])
 
