@@ -184,7 +184,7 @@ def complete_transition(current_chord_list, next_chord_list,
                         next_simple_chord):  # check size of epsilon -> handle cases with -1 left
     btas_options = []
 
-    for i, note in zip(range(len(next_chord_list)), next_chord_list):
+    for i, note in enumerate(next_chord_list):
         if note == -1:
             btas_options.append(list(filter(lambda x: next_simple_chord.includes(x),
                                             list(all_in_epsilon(current_chord_list[i])))))  # add outer list
@@ -195,6 +195,7 @@ def complete_transition(current_chord_list, next_chord_list,
 
 
 def filter_w_rules(current_chord_list, options):
+    # return options
     # rule 1 : no duplicate of the seventh note
     temp1 = set()
     for chord_i in options:
@@ -286,10 +287,12 @@ def filter_w_rules(current_chord_list, options):
         for i, note_i in enumerate(current_chord_list):
             for j, note_j in enumerate(current_chord_list[i:]):
                 if i != j:
-                    interval_current = (note_j % 12) - (note_i % 12)
-                    interval_next = (chord_i[j] % 12) - (chord_i[i] % 12)
-                    if interval_current == interval_next and (
-                            interval_current == 0 or interval_current == 5 or interval_current == 7):
+                    no_mov = note_j == chord_it[j] and note_i == chord_it[i]
+
+                    interval_current = (note_j - note_i) % 12
+                    interval_next = (chord_it[j] - chord_it[i]) % 12
+                    if interval_current == interval_next and not no_mov and \
+                            (interval_current == 0 or interval_current == 5 or interval_current == 7):
                         int_problem = True
         if not int_problem:
             temp9.add(chord_it)
@@ -407,8 +410,9 @@ if __name__ == '__main__':
     # TODO reaches state with all chords with double SI: Why?
     compositionTree = Node(start_chord, 1, [])
 
-compose(start_chord, bass, compositionTree)
-print(compositionTree)
+    compose(start_chord, bass[1:], compositionTree)
+    print(compositionTree)
+    print(compositionTree.level())
 
 # conserver les mêmes notes
 # aller vers la plus proche
