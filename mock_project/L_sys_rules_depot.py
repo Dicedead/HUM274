@@ -29,7 +29,7 @@ def rules_complex():
 
 
 def initial_complex():
-    return "F]AEE-B"
+    return "[F]AEE-B"
 
 
 def run_complex_for(n, show_mode=False):

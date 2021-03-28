@@ -124,7 +124,7 @@ class ChordTree:
         self.depth = depth
 
     def __str__(self):
-        return "\t" * (self.depth-1) + str(self.root) + " (" + str(self.depth) + ")" + "\n"
+        return "\t" * (self.depth - 1) + str(self.root) + " (" + str(self.depth) + ")" + "\n"
 
 
 class Leaf(ChordTree):
@@ -133,7 +133,7 @@ class Leaf(ChordTree):
         super().__init__(root, depth)
 
     def __str__(self):
-        return "\t" * (self.depth-1) + str(self.root) + " (" + str(self.depth) + ")" + "\n"
+        return "\t" * (self.depth - 1) + str(self.root) + " (" + str(self.depth) + ")" + "\n"
 
     def level(self):
         return 1
@@ -152,7 +152,7 @@ class Node(ChordTree):
         self.children.extend(children)
 
     def __str__(self):
-        ret = "\t" * (self.depth-1) + str(self.root) + " (" + str(self.depth) + ")" + "\n"
+        ret = "\t" * (self.depth - 1) + str(self.root) + " (" + str(self.depth) + ")" + "\n"
         for child in self.children:
             ret += str(child)
         return ret
@@ -381,36 +381,34 @@ def compose(initial_chord, bass_line, prev_chord_tree: Node):
                 prev_chord_tree.add_child(leaf)
 
 
-
-"""
-def to_arrays(path):
-    for root in bass[1:]:
-        succession.append(actual_chord)
-        actual_chord = next_chords(actual_chord, root)[0]
-        actual_chord = Chord(actual_chord[0], actual_chord[1], actual_chord[2], actual_chord[3])
-
+def to_arrays(voices):
+    """
+    :param voices: list of tuples of 4 elements
+    :return:
+    """
     bass = []
     tenor = []
     alto = []
     soprano = []
 
-    for chord in succession:
+    for chord in voices:
+        chord = Chord.of_tuple(chord)
         bass.append(chord.b)
         tenor.append(chord.t)
         alto.append(chord.a)
         soprano.append(chord.s)
 
     return [bass, tenor, alto, soprano]
-"""
+
 
 if __name__ == '__main__':
     start_chord = Chord(DO, DO + 2 * OCTAVE, SOL + 2 * OCTAVE, MI + 3 * OCTAVE)
     # bass = [DO, FA, SOL, SI, DO, DO, LA, FA, SOL, SOL, DO, FA, SOL, DO, DO]
-    bass = [DO, FA, SOL, SI]
+    bass_line = [DO, FA, SOL, SI]
     # TODO reaches state with all chords with double SI: Why?
     compositionTree = Node(start_chord, 1, [])
 
-    compose(start_chord, bass[1:], compositionTree)
+    compose(start_chord, bass_line[1:], compositionTree)
     print(compositionTree)
     print(compositionTree.level())
 
