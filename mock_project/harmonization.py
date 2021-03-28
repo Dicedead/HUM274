@@ -399,10 +399,10 @@ def compose(initial_chord, bass_line, prev_chord_tree: Node):
 
 if __name__ == '__main__':
     start_chord = Chord(DO, DO + 2 * OCTAVE, SOL + 2 * OCTAVE, MI + 3 * OCTAVE)
-    bass_line = [DO, FA, SOL, SI, DO, FA, LA, FA, SOL, SI, DO, FA, DO, SOL, SOL, DO]
+    bass = [DO, FA, SOL, SI, DO, FA, LA, FA, SOL, SI, DO, FA, DO, SOL, SOL, DO]
     # bass_line = [DO, FA, SOL, SI, DO, DO, LA, SI, DO]
     compositionTree = Node(start_chord, 1, [])
 
-    compose(start_chord, bass_line[1:], compositionTree)
+    compose(start_chord, bass[1:], compositionTree)
     print(compositionTree)
     print(compositionTree.level())
