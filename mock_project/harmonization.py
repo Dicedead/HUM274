@@ -10,7 +10,8 @@ For the final project, we could implement a much more complex algorithm and obje
 of better harmonizations: we could establish less assumptions and add more rules
 """
 
-import itertools
+from itertools import product
+from copy import deepcopy
 
 DO = 0
 RE = 2
@@ -61,7 +62,7 @@ class Chord:
 
     def simplify(self):
         reduced = [self.b % 12, self.t % 12, self.a % 12, self.s % 12]
-        return sorted(list(set(reduced)))
+        return sorted(list({i for i in reduced}))
 
     def fundamental(self):
         return self.b
@@ -122,13 +123,24 @@ class ChordTree:
         self.root = root
         self.depth = depth
 
+    def __str__(self):
+        return "\t" * (self.depth-1) + str(self.root) + " (" + str(self.depth) + ")" + "\n"
+
 
 class Leaf(ChordTree):
+
     def __init__(self, root: Chord, depth: int):
         super().__init__(root, depth)
 
+    def __str__(self):
+        return "\t" * (self.depth-1) + str(self.root) + " (" + str(self.depth) + ")" + "\n"
+
+    def level(self):
+        return 1
+
 
 class Node(ChordTree):
+
     def __init__(self, root: Chord, depth: int, children: list):
         super().__init__(root, depth)
         self.children = children
@@ -149,7 +161,7 @@ class Empty(ChordTree):
 
 
 def all_options(tas_options):
-    return itertools.product(*tas_options)
+    return {i for i in product(*tas_options)}
 
 
 def all_in_epsilon(note):
@@ -172,23 +184,23 @@ def complete_transition(current_chord_list, next_chord_list,
 
 def filter_w_rules(current_chord_list, options):
     # rule 1 : no duplicate of the seventh note
-    temp1 = []
+    temp1 = set()
     for chord_i in options:
         ack = 0
         for note in chord_i:
             if note % 12 == SI:
                 ack += 1
         if 0 <= ack < 2:
-            temp1.append(chord_i)
+            temp1.add(chord_i)
 
     # rule 2 : accords are in range
-    temp2 = []
+    temp2 = set()
     for chord_i in temp1:
         if Chord.of_tuple(chord_i).check_ranges():
-            temp2.append(chord_i)
+            temp2.add(chord_i)
 
     # rule 3 : seventh (leading) note goes to tonic if grade is V or VII and the following is I, IV or VI
-    temp3 = []
+    temp3 = set()
     for chord_i in temp2:
         # TODO check if order in tuple (chord_i) is preserved
         prev_fundamental = Chord.simple_of(current_chord_list[0]).fundamental
@@ -199,7 +211,7 @@ def filter_w_rules(current_chord_list, options):
 
         for i, note in enumerate(current_chord_list):
             if not (note % 12 == SI and chord_i[i] % 12 != DO and seventh_active):
-                temp3.append(chord_i)
+                temp3.add(chord_i)
 
     # rule 4 : a note cannot appear more than 2 times in a chord
     temp4 = []
@@ -213,25 +225,25 @@ def filter_w_rules(current_chord_list, options):
             temp4.append(chord_i)
 
     # rule 5 : the fifth cannot be repeated
-    temp5 = []
+    temp5 = set()
     for chord_i in temp4:
         # TODO check if order in tuple (chord_i) is preserved
         fifth = Chord.simple_of(chord_i[0]).fifth
         simple_notes_list = list(map(lambda x: x % 12, list(chord_i)))
         if not simple_notes_list.count(fifth) > 1:
-            temp5.append(chord_i)
+            temp5.add(chord_i)
 
     # rule 6 : all notes of the chord are present
-    temp6 = []
+    temp6 = set()
     for chord_i in temp5:
         simple_chord = Chord.simple_of(chord_i[0])
         simple_notes_list = list(map(lambda x: x % 12, list(chord_i)))
         if simple_chord.fundamental in simple_notes_list and simple_chord.third in simple_notes_list \
                 and simple_chord.fifth in simple_notes_list:
-            temp6.append(chord_i)
+            temp6.add(chord_i)
 
     # rule 7 : third only duplicated when the fundamental duplication is not recommended or grades are V-VI
-    temp7 = []
+    temp7 = set()
     for chord_i in temp6:
         fundamental = Chord.simple_of(chord_i[0]).fundamental
         third = Chord.simple_of(chord_i[0]).third
@@ -244,18 +256,20 @@ def filter_w_rules(current_chord_list, options):
         five_six = prev_fundamental == SOL and fundamental == LA
 
         if not (third_two_times and fund_rec and not five_six):
-            temp7.append(chord_i)
+            temp7.add(chord_i)
 
     # rule 8 : forth augmented interval not allowed
-    temp8 = []
+    temp8 = set()
     for chord_i in temp7:
         for i, note in enumerate(current_chord_list):
             if not (note % 12 == FA and chord_i[i] % 12 == SI):
-                temp8.append(chord_i)
+                temp8.add(chord_i)
 
     # rule 9 : two consecutive fourths, fifths and octaves are not allowed
-    temp9 = []
-    for chord_i in temp8:
+    temp9 = set()
+    for chord_it in temp8:
+        simp_next = Chord.of_tuple(chord_it).simplify()
+        simp_curr = Chord.of(current_chord_list).simplify()
         int_problem = False
         for i, note_i in enumerate(current_chord_list):
             for j, note_j in enumerate(current_chord_list[i:]):
@@ -266,7 +280,7 @@ def filter_w_rules(current_chord_list, options):
                             interval_current == 0 or interval_current == 5 or interval_current == 7):
                         int_problem = True
         if not int_problem:
-            temp9.append(chord_i)
+            temp9.add(chord_it)
 
     # rule 10 : direct fourths, fifths and octaves are not allowed
     temp10 = []
@@ -287,13 +301,14 @@ def filter_w_rules(current_chord_list, options):
 
     # TODO rule 11: seventh note in the soprano if it is the final cadence
 
-    return options
+    return temp7
 
 
 transition = {}  # dictionary that includes transitions from a chord and a bass note to all the possibilities
 
 
 def next_chords(current_chord: Chord, next_note: int):
+    global transition
     """
     Returns the all the possible chords that can be harmonised from a bass note and the current chord.
     """
@@ -303,7 +318,8 @@ def next_chords(current_chord: Chord, next_note: int):
         return options
     else:
 
-        options = []
+        options = set()
+
         # Keep common notes
         current_chord_list = current_chord.to_list()
         next_chord_list = [next_note]
@@ -321,14 +337,8 @@ def next_chords(current_chord: Chord, next_note: int):
             options = filter_w_rules(current_chord_list,
                                      complete_transition(current_chord_list, next_chord_list, next_simple_chord))
 
-        transition[current_chord] = tuple(options)
-        return options
-
-
-start_chord = Chord(DO, DO + 2 * OCTAVE, SOL + 2 * OCTAVE, MI + 3 * OCTAVE)
-# bass = [DO, FA, SOL, SI, DO, DO, LA, FA, SOL, SOL, DO, FA, SOL, DO, DO]
-bass = [DO, FA, SOL]
-compositionTree = Node(start_chord, 1, [])
+        transition[(current_chord, next_note)] = tuple(opt for opt in options)
+        return transition[(current_chord, next_note)]
 
 
 def compose(initial_chord, bass_line, prev_chord_tree: Node):
@@ -341,17 +351,20 @@ def compose(initial_chord, bass_line, prev_chord_tree: Node):
         list_next_chords = next_chords(initial_chord, bass_line[0])
 
         for chord in list_next_chords:
-            node = Node(chord, prev_chord_tree.depth + 1, [])
+            chord_type = Chord(chord[0], chord[1], chord[2], chord[3])
+            node = Node(chord_type, prev_chord_tree.depth + 1, [])
             prev_chord_tree.add_child(node)
-            compose(chord, bass_line[1:], node)
+            compose(chord_type, bass_line[1:], node)
 
     else:
         if len(bass_line) == 1:
             list_next_chords = next_chords(initial_chord, bass_line[0])
 
             for chord in list_next_chords:
-                leaf = Leaf(chord, prev_chord_tree.depth + 1)
+                chord_type = Chord(chord[0], chord[1], chord[2], chord[3])
+                leaf = Leaf(chord_type, prev_chord_tree.depth + 1)
                 prev_chord_tree.add_child(leaf)
+
 
 
 """
@@ -374,6 +387,13 @@ def to_arrays(path):
 
     return [bass, tenor, alto, soprano]
 """
+
+if __name__ == '__main__':
+    start_chord = Chord(DO, DO + 2 * OCTAVE, SOL + 2 * OCTAVE, MI + 3 * OCTAVE)
+    # bass = [DO, FA, SOL, SI, DO, DO, LA, FA, SOL, SOL, DO, FA, SOL, DO, DO]
+    bass = [DO, FA, SOL, SI]
+    # TODO reaches state with all chords with double SI: Why?
+    compositionTree = Node(start_chord, 1, [])
 
 compose(start_chord, bass, compositionTree)
 print(compositionTree)
