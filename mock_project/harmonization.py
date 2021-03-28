@@ -286,16 +286,15 @@ def filter_w_rules(current_chord_list, options):
     # rule 9 : two consecutive fourths, fifths and octaves are not allowed
     temp9 = set()
     for chord_it in temp8:
-
         int_problem = False
         for i, note_i in enumerate(current_chord_list):
-            for j, note_j in enumerate(current_chord_list[i:]):
+            for j in range(i, 4):
                 if i != j:
-                    mov = note_j != chord_it[j] or note_i != chord_it[i]
+                    mov = current_chord_list[j] != chord_it[j] or note_i != chord_it[i]
 
-                    interval_current = (note_j - note_i) % 12
+                    interval_current = (current_chord_list[j] - note_i) % 12
                     interval_next = (chord_it[j] - chord_it[i]) % 12
-                    if interval_current == interval_next and not mov and \
+                    if interval_current == interval_next and mov and \
                             (interval_current == 0 or interval_current == 5 or interval_current == 7):
                         int_problem = True
         if not int_problem:
@@ -306,21 +305,22 @@ def filter_w_rules(current_chord_list, options):
     for chord_i in temp9:
         int_problem = False
         for i, note_i in enumerate(current_chord_list):
-            for j, note_j in enumerate(current_chord_list[i:]):
-                interval_next = (chord_i[j] % 12) - (chord_i[i] % 12)
-                change_chords_i = chord_i[i] - note_i
-                change_chords_j = chord_i[j] - note_j
+            for j in range(i, 4):
+                if i != j:
+                    interval_next = chord_i[j] - chord_i[i]
+                    change_chords_i = chord_i[i] - note_i
+                    change_chords_j = chord_i[j] - current_chord_list[j]
 
-                if ((change_chords_i > 2 and change_chords_j > 2) or (change_chords_i < -2 and change_chords_j < -2)) \
-                        and (interval_next == 0 or interval_next == 5 or interval_next == 7):
-                    int_problem = True
+                    if ((change_chords_i > 2 and change_chords_j > 2) or (change_chords_i < -2 and change_chords_j < -2)) \
+                            and (interval_next == 0 or interval_next == 5 or interval_next == 7):
+                        int_problem = True
 
         if not int_problem:
             temp10.add(chord_i)
 
-    # TODO rule 11: seventh note in the soprano if it is the final cadence
+    # rule 11: seventh note in the soprano if it is the final cadence
 
-    return temp9
+    return temp10
 
 
 transition = {}  # dictionary that includes transitions from a chord and a bass note to all the possibilities
@@ -410,8 +410,8 @@ def to_arrays(voices):
 
 if __name__ == '__main__':
     start_chord = Chord(DO, DO + 2 * OCTAVE, SOL + 2 * OCTAVE, MI + 3 * OCTAVE)
-    # bass_line = [DO, FA, SOL, SI, DO, DO, LA, FA, SOL, SOL, DO, FA, SOL, DO, DO]
-    bass_line = [DO, FA, SOL, SI, DO, DO, LA]
+    bass_line = [DO, FA, SOL, SI, DO, DO, LA, FA, SOL, SOL, DO, FA, SOL, DO, DO]
+    # bass_line = [DO, FA, SOL, SI, DO, DO, LA]
     compositionTree = Node(start_chord, 1, [])
 
     compose(start_chord, bass_line[1:], compositionTree)
