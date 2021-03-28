@@ -32,5 +32,9 @@ def initial_complex():
     return "[F]AEE-B"
 
 
+def chars_complex():
+    return ["A", "B", "C", "D", "E", "F"]
+
+
 def run_complex_for(n, show_mode=False):
     return rules_complex().run(initial_complex(), n, show_mode)

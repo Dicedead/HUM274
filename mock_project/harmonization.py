@@ -389,25 +389,6 @@ def compose(initial_chord, bass_line, prev_chord_tree: Node):
                 prev_chord_tree.add_child(leaf)
 
 
-def to_arrays(voices):
-    """
-    :param voices: list of chords
-    :return:
-    """
-    bass = []
-    tenor = []
-    alto = []
-    soprano = []
-
-    for chord in voices:
-        bass.append(chord.b)
-        tenor.append(chord.t)
-        alto.append(chord.a)
-        soprano.append(chord.s)
-
-    return [bass, tenor, alto, soprano]
-
-
 if __name__ == '__main__':
     start_chord = Chord(DO, DO + 2 * OCTAVE, SOL + 2 * OCTAVE, MI + 3 * OCTAVE)
     # bass_line = [DO, FA, SOL, SI, DO, DO, LA, FA, SOL, SOL, DO, FA, SOL, DO, DO]
