@@ -287,17 +287,16 @@ def filter_w_rules(current_chord_list, options):
     # rule 9 : two consecutive fourths, fifths and octaves are not allowed
     temp9 = set()
     for chord_it in temp8:
-        simp_next = Chord.of_tuple(chord_it).simplify()
-        simp_curr = Chord.of(current_chord_list).simplify()
+
         int_problem = False
         for i, note_i in enumerate(current_chord_list):
             for j, note_j in enumerate(current_chord_list[i:]):
                 if i != j:
-                    no_mov = note_j == chord_it[j] and note_i == chord_it[i]
+                    mov = note_j != chord_it[j] or note_i != chord_it[i]
 
                     interval_current = (note_j - note_i) % 12
                     interval_next = (chord_it[j] - chord_it[i]) % 12
-                    if interval_current == interval_next and not no_mov and \
+                    if interval_current == interval_next and not mov and \
                             (interval_current == 0 or interval_current == 5 or interval_current == 7):
                         int_problem = True
         if not int_problem:
@@ -413,7 +412,7 @@ def to_arrays(voices):
 if __name__ == '__main__':
     start_chord = Chord(DO, DO + 2 * OCTAVE, SOL + 2 * OCTAVE, MI + 3 * OCTAVE)
     # bass_line = [DO, FA, SOL, SI, DO, DO, LA, FA, SOL, SOL, DO, FA, SOL, DO, DO]
-    bass_line = [DO, SOL, FA, SI, DO, SOL, DO]
+    bass_line = [DO, FA, SOL, SI, DO, DO, LA]
     compositionTree = Node(start_chord, 1, [])
 
     compose(start_chord, bass_line[1:], compositionTree)
