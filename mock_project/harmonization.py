@@ -377,7 +377,6 @@ def compose(initial_chord, bass_line, prev_chord_tree: Node):
     Recursive function that from an initial chord, a bass line and an empty composition tree
     creates a composition tree with all the possible harmonizations.
     """
-
     if len(bass_line) > 1:
         list_next_chords = next_chords(initial_chord, bass_line[0], False)
 
@@ -396,10 +395,9 @@ def compose(initial_chord, bass_line, prev_chord_tree: Node):
                 leaf = Leaf(chord_type, prev_chord_tree.depth + 1)
                 prev_chord_tree.add_child(leaf)
 
-
 if __name__ == '__main__':
     start_chord = Chord(DO, DO + 2 * OCTAVE, SOL + 2 * OCTAVE, MI + 3 * OCTAVE)
-    bass = [DO, FA, SOL, SI, DO, FA, LA, FA, SOL, SI, DO, FA, DO, SOL, SOL, DO]
+    bass = [DO, FA, SOL, SI, DO+OCTAVE, FA, LA, FA, SOL, SI, DO+OCTAVE, FA, SOL, DO, SOL, DO]
     # bass_line = [DO, FA, SOL, SI, DO, DO, LA, SI, DO]
     compositionTree = Node(start_chord, 1, [])
 

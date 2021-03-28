@@ -12,7 +12,6 @@ def translate(int_note, dur):
     """
     first_char_arr = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
     pitch = first_char_arr[int_note % 12] + str(int(2 + int_note / 12))
-    print(pitch)
 
     if dur < 0:
         return note.Rest(duration=duration.Duration(quarterLength=-dur))
@@ -64,7 +63,7 @@ def combine_voices(length: int, rhythm, *voices, inst=None, time_sig='4/4'):
     return score
 
 
-def select_path_in_tree(l_sys_string: str, char_list: list, composition_tree: Node):
+def select_path_in_tree(l_sys_string: str, char_list: list, length: int, composition_tree: Node):
     char_string = ""
     for c in l_sys_string:
         if c in char_list:
@@ -72,10 +71,13 @@ def select_path_in_tree(l_sys_string: str, char_list: list, composition_tree: No
 
     curr_node = composition_tree
     path = [curr_node.root]
-    for c in char_string:
-        if not isinstance(curr_node, Leaf):
-            curr_node = curr_node.children[char_list.index(c) % len(curr_node.children)]
+    for i in range(length):
+        if not isinstance(curr_node, Leaf) and len(curr_node.children) > 0:
+            curr_node = curr_node.children[char_list.index(char_string[i]) % len(curr_node.children)]
             path.append(curr_node.root)
+        elif isinstance(curr_node, Leaf):
+            path.append(curr_node.root)
+            break
 
     return path
 

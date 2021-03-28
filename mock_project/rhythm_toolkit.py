@@ -94,7 +94,8 @@ def sequence_from_string_basic(string: str):
                 tab[-1] = tab[-1] + 0.5 * tab[-1]
         elif c == '-':
             if len(tab) > 0:
-                tab[-1] = tab[-1] / 2
+                if tab[-1] > float(1.0 / 1024):
+                    tab[-1] = tab[-1] / 2
     return tab
 
 
@@ -133,7 +134,8 @@ def sequence_from_string_complex(string: str):
                 tb[-1] = tb[-1] + 0.5 * tb[-1]
         elif c == ']':
             if len(tb) > 0:
-                tb[-1] = tb[-1] / 2
+                if tb[-1] > float(1.0 / 1024):
+                    tb[-1] = tb[-1] / 2
         elif c == '-':
             if len(tb) > 0:
                 tb[-1] = -tb[-1]
