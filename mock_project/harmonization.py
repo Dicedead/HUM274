@@ -151,6 +151,18 @@ class Node(ChordTree):
     def add_children(self, children):
         self.children.extend(children)
 
+    def __str__(self):
+        ret = "\t" * (self.depth-1) + str(self.root) + " (" + str(self.depth) + ")" + "\n"
+        for child in self.children:
+            ret += str(child)
+        return ret
+
+    def level(self):
+        children_count = 0
+        for child in self.children:
+            children_count += child.level()
+        return children_count
+
 
 class Empty(ChordTree):
     def __init(self, depth: int):
@@ -214,7 +226,7 @@ def filter_w_rules(current_chord_list, options):
                 temp3.add(chord_i)
 
     # rule 4 : a note cannot appear more than 2 times in a chord
-    temp4 = []
+    temp4 = set()
     for chord_i in temp3:
         simple_notes_list = list(map(lambda x: x % 12, list(chord_i)))
         correct_dupl = True
@@ -222,7 +234,7 @@ def filter_w_rules(current_chord_list, options):
             if simple_notes_list.count(note) > 2:
                 correct_dupl = False
         if correct_dupl:
-            temp4.append(chord_i)
+            temp4.add(chord_i)
 
     # rule 5 : the fifth cannot be repeated
     temp5 = set()
@@ -283,7 +295,7 @@ def filter_w_rules(current_chord_list, options):
             temp9.add(chord_it)
 
     # rule 10 : direct fourths, fifths and octaves are not allowed
-    temp10 = []
+    temp10 = set()
     for chord_i in temp9:
         int_problem = False
         for i, note_i in enumerate(current_chord_list):
@@ -297,7 +309,7 @@ def filter_w_rules(current_chord_list, options):
                     int_problem = True
 
         if not int_problem:
-            temp9.append(chord_i)
+            temp10.add(chord_i)
 
     # TODO rule 11: seventh note in the soprano if it is the final cadence
 
@@ -326,7 +338,7 @@ def next_chords(current_chord: Chord, next_note: int):
         next_simple_chord = Chord.simple_of(next_note)
 
         if current_chord.fundamental() == next_note:
-            options.append(current_chord.to_list())
+            options.add(tuple(current_chord.to_list()))
         else:
             for note in current_chord_list[1:]:
                 if next_simple_chord.includes(note):
@@ -346,8 +358,8 @@ def compose(initial_chord, bass_line, prev_chord_tree: Node):
     Recursive function that from an initial chord, a bass line and an empty composition tree
     creates a composition tree with all the possible harmonizations.
     """
-    # initial_chord = tuple(initial_chord.to_list())
-    if len(bass_line) > 0:
+
+    if len(bass_line) > 1:
         list_next_chords = next_chords(initial_chord, bass_line[0])
 
         for chord in list_next_chords:
