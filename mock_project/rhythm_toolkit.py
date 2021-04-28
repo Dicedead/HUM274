@@ -4,16 +4,13 @@ from math import fabs
 
 # NOTEBOOK BASICS #################################
 
-UNIT = 1 / 4  # durations expressed as UNIT * (whole note) (currently: quarter note)
-
-
 def get_quarter_length():
-    return UNIT
+    return 1/ 4
 
 
 def percussion_hit(duration, pitch="C4"):
     # Create Note object for percussion hits (default pitch is C4)
-    return note.Note(pitch, quarterLength=duration * (4 * UNIT))
+    return note.Note(pitch, quarterLength=duration * (4 * get_quarter_length()))
 
 
 def create_percussion(instru=instrument.Woodblock(), time_sig=None):
@@ -33,7 +30,7 @@ def append_event(duration, original_stream, rest=False, pitch='C4'):
     # Returns a new_stream obtained by appending a rhythmical event or a rest of given duration to the original_stream
     new_stream = original_stream
     if rest:
-        new_stream.append(note.Rest(quarterLength=duration * (4 * UNIT)))
+        new_stream.append(note.Rest(quarterLength=duration * (4 * get_quarter_length())))
     else:
         new_stream.append(percussion_hit(duration, pitch))
     return new_stream
