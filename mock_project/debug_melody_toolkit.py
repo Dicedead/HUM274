@@ -63,7 +63,7 @@ def combine_voices(length: int, rhythm, *voices, inst=None, time_sig='4/4'):
 
     return score
 
-
+# FIXME NOT RANDOM
 def select_path_in_tree(length: int, composition_tree: Node):
 
     curr_node = composition_tree

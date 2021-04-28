@@ -36,8 +36,12 @@ DOMINANT = 4
 SUBMEDIANT = 5
 LEADING_TONE = 6
 
-PERFECT_FIFTH_INTERVAL = 7
+UNISON = 0
+MINOR_THIRD_INTERVAL = 3
+MAJOR_THIRD_INTERVAL = 4
 PERFECT_FOURTH_INTERVAL = 5
+PERFECT_FIFTH_INTERVAL = 7
+
 
 
 def new_tonality_sharp(prev_tonality):
@@ -46,6 +50,9 @@ def new_tonality_sharp(prev_tonality):
 
 def new_tonality_flat(prev_tonality):
     return [(note + PERFECT_FOURTH_INTERVAL) % 12 for note in prev_tonality]
+
+def is_major(asdtonality):
+    return abs(asdtonality[MEDIANT] - asdtonality[TONIC]) == MAJOR_THIRD_INTERVAL
 
 
 class Tonality(Enum):
@@ -115,7 +122,7 @@ noteOf = {DO: "Do",
           LA_S_SI_F: "La#/Sib",
           SI: "Si"}
 
-EPSILON = 7  # allowed delta between two notes when looking for a transition
+EPSILON = 6  # allowed delta between two notes when looking for a transition
 
 
 class SimplifiedChord:
@@ -176,17 +183,18 @@ class Chord:
         else:
             return Chord.empty()
 
-    def check_ranges(self):
+    def check_abs_ranges(self):
         abs_range_b: bool = DO <= self.b <= DO + 2 * OCTAVE
         abs_range_t: bool = SOL <= self.t <= SOL + 2 * OCTAVE
         abs_range_a: bool = SOL + 1 * OCTAVE <= self.a <= MI + 3 * OCTAVE
-        abs_range_s: bool = DO + 2 * OCTAVE <= self.s <= SOL + 3 * OCTAVE
+        abs_range_s: bool = DO + 2 * OCTAVE <= self.s <= LA + 3 * OCTAVE
+        return abs_range_b and abs_range_t and abs_range_a and abs_range_s
 
-        absolute_ranges: bool = abs_range_b and abs_range_t and abs_range_a and abs_range_s
+    def check_inter_ranges(self):
+        return (self.s - self.a <= 14) and (self.a - self.t <= 14) and (self.t - self.b <= 24)
 
-        inter_ranges: bool = (self.s - self.a <= 14) and (self.a - self.t <= 14) and (self.t - self.b <= 24)
-
-        return absolute_ranges and inter_ranges
+    def check_ranges(self):
+        return self.check_abs_ranges() and self.check_inter_ranges()
 
     @staticmethod
     def simple_of(fundamental: int, tonality_simple: list):
@@ -291,122 +299,155 @@ def complete_transition(current_chord_list, next_chord_list,
     return all_options(btas_options)
 
 
-def filter_w_rules(current_chord_list, options, is_cadence: bool, tonality_rules_input: Tonality):
+def filter_w_rules(current_chord_list, options, next_next_degree, is_cadence: bool, tonality_rules_input: Tonality):
 
-    # FIXME: check augmented intervals!! (SOL MAJOR: fa# - do descending)
-    # FIXME: CHANGE RULES FOR MINOR TONALITIES!
-
+    # FIXME: quitar cruzamientos (de gran envergadura)
     tonality_rules = tonality_rules_input.value
 
-    # rule 1 : no duplicate of the seventh note
+    # rule 0 : no big overtaking between voices
+    temp0 = set()
+    for next_chord in options:
+        b_t_interval = next_chord[1] - next_chord[0]
+        t_a_interval = next_chord[2] - next_chord[1]
+        a_s_interval = next_chord[3] - next_chord[2]
+
+        not_big_overtake_b_t = b_t_interval >= -4
+        not_big_overtake_t_a = t_a_interval >= -4
+        not_big_overtake_a_s = a_s_interval >= -4
+
+        if is_cadence:
+            not_big_overtake_b_t = b_t_interval >= 0
+            not_big_overtake_t_a = t_a_interval >= 0
+            not_big_overtake_a_s = a_s_interval >= 0
+
+        if not_big_overtake_b_t and not_big_overtake_t_a  and not_big_overtake_a_s:
+            temp0.add(next_chord)
+
+    # rule 1 : no duplication of the leading note
     temp1 = set()
-    for chord_i in options:
+    for next_chord in temp0:
         ack = 0
-        for note in chord_i:
+        for note in next_chord:
             if note % 12 == tonality_rules[LEADING_TONE]:
                 ack += 1
         if 0 <= ack < 2:
-            temp1.add(chord_i)
+            temp1.add(next_chord)
 
-    # rule 2 : accords are in range
+    # rule 2 : chords are in range
     temp2 = set()
-    for chord_i in temp1:
-        if Chord.of_tuple(chord_i).check_ranges():
-            temp2.add(chord_i)
+    for next_chord in temp1:
+        if Chord.of_tuple(next_chord).check_ranges():
+            temp2.add(next_chord)
 
-    # rule 3 : seventh (leading) note goes to tonic if grade is V or VII and the following is I, IV or VI
+    # rule 3 : leading note goes to tonic if grade is V or VII and the following is I, IV or VI
     temp3 = set()
-    for chord_i in temp2:
+    for next_chord in temp2:
         prev_fundamental = Chord.simple_of(current_chord_list[0], tonality_rules).fundamental
-        fundamental = Chord.simple_of(chord_i[0], tonality_rules).fundamental
+        fundamental = Chord.simple_of(next_chord[0], tonality_rules).fundamental
 
-        seventh_active = (prev_fundamental == tonality_rules[DOMINANT] or prev_fundamental == tonality_rules[LEADING_TONE]) \
+        leading_active = (prev_fundamental == tonality_rules[DOMINANT] or prev_fundamental == tonality_rules[LEADING_TONE]) \
                          and (fundamental == tonality_rules[TONIC] or fundamental == tonality_rules[SUBDOMINANT]
                               or fundamental == tonality_rules[SUBMEDIANT])
 
         for i, note in enumerate(current_chord_list):
-            if not (note % 12 == tonality_rules[LEADING_TONE] and chord_i[i] % 12 != tonality_rules[TONIC] and seventh_active):
-                temp3.add(chord_i)
+            if not leading_active or \
+                    (note % 12 == tonality_rules[LEADING_TONE] and next_chord[i] % 12 == tonality_rules[TONIC] and leading_active):
+                temp3.add(next_chord)
 
     # rule 4 : a note cannot appear more than 2 times in a chord
     temp4 = set()
-    for chord_i in temp3:
-        simple_notes_list = list(map(lambda x: x % 12, list(chord_i)))
+    for next_chord in temp3:
+        simple_notes_list = list(map(lambda x: x % 12, list(next_chord)))
         correct_dupl = True
         for note in simple_notes_list:
             if simple_notes_list.count(note) > 2:
                 correct_dupl = False
         if correct_dupl:
-            temp4.add(chord_i)
+            temp4.add(next_chord)
 
-    # rule 5 : the fifth cannot be repeated
+    # rule 5 : the fifth note cannot be repeated
     temp5 = set()
-    for chord_i in temp4:
-        fifth = Chord.simple_of(chord_i[0], tonality_rules).fifth
-        simple_notes_list = list(map(lambda x: x % 12, list(chord_i)))
+    for next_chord in temp4:
+        fifth = Chord.simple_of(next_chord[0], tonality_rules).fifth
+        simple_notes_list = list(map(lambda x: x % 12, list(next_chord)))
         if not simple_notes_list.count(fifth) > 1:
-            temp5.add(chord_i)
+            temp5.add(next_chord)
 
     # rule 6 : all notes of the chord are present
     temp6 = set()
-    for chord_i in temp5:
-        simple_chord = Chord.simple_of(chord_i[0], tonality_rules)
-        simple_notes_list = list(map(lambda x: x % 12, list(chord_i)))
+    for next_chord in temp5:
+        simple_chord = Chord.simple_of(next_chord[0], tonality_rules)
+        simple_notes_list = list(map(lambda x: x % 12, list(next_chord)))
         if simple_chord.fundamental in simple_notes_list and simple_chord.third in simple_notes_list \
                 and simple_chord.fifth in simple_notes_list:
-            temp6.add(chord_i)
+            temp6.add(next_chord)
 
-    # rule 7 : third only duplicated when the fundamental duplication is not recommended or grades are V-VI
+    # rule 7 : third duplication is authorised when the degree is not I, IV and V; and is mandatory when
+    #   V -> VI chaining in major and minor tonalities (3rd dup. in VI)
+    #   VI -> V chaining in minor tonality (3rd dup. in VI)
+    #   VII -> I (already implemented because of the 1st and 5st rules, 3rd dup. in VII)
     temp7 = set()
-    for chord_i in temp6:
-        fundamental = Chord.simple_of(chord_i[0], tonality_rules).fundamental
-        third = Chord.simple_of(chord_i[0], tonality_rules).third
-        simple_notes_list = list(map(lambda x: x % 12, list(chord_i)))
-
+    for next_chord in temp6:
         prev_fundamental = Chord.simple_of(current_chord_list[0], tonality_rules).fundamental
 
-        third_two_times = simple_notes_list.count(third) == 2
-        fund_rec = fundamental == tonality_rules[TONIC] or fundamental == tonality_rules[SUBDOMINANT] \
-                   or fundamental == tonality_rules[DOMINANT] or fundamental == tonality_rules[SUPERTONIC]
-        five_six = prev_fundamental == tonality_rules[DOMINANT] and fundamental == tonality_rules[SUBMEDIANT]
+        fundamental = Chord.simple_of(next_chord[0], tonality_rules).fundamental
+        third = Chord.simple_of(next_chord[0], tonality_rules).third
+        simple_notes_list = list(map(lambda x: x % 12, list(next_chord)))
 
-        if not (third_two_times and fund_rec and not five_six):
-            temp7.add(chord_i)
+        third_two_times = simple_notes_list.count(third) == 2
+
+        # third duplication not recommended
+        third_not_recom = fundamental == tonality_rules[TONIC] or fundamental == tonality_rules[SUBDOMINANT] \
+                          or fundamental == tonality_rules[DOMINANT]
+
+        # V -> VI chaining in major and minor tonalities (3rd dup. in VI)
+        V_VI = prev_fundamental == tonality_rules[DOMINANT] and fundamental == tonality_rules[SUBMEDIANT]
+
+        # VI -> V chaining in minor tonality (3rd dup. in VI)
+        VI_V_minor = fundamental == tonality_rules[SUBMEDIANT] and \
+                     next_next_degree == tonality_rules[DOMINANT] and not is_major(tonality_rules)
+
+        mandatory_third = V_VI or VI_V_minor
+
+        if (mandatory_third and third_two_times) or (not mandatory_third and not(third_not_recom and third_two_times)):
+            temp7.add(next_chord)
 
     # rule 8 : fourth augmented interval not allowed
+    # FIXME: check augmented intervals!! (SOL MAJOR: fa# - do descending)
     temp8 = set()
-    for chord_i in temp7:
+    for next_chord in temp7:
         for i, note in enumerate(current_chord_list):
-            if not (note % 12 == tonality_rules[SUBDOMINANT] and chord_i[i] % 12 == tonality_rules[LEADING_TONE]):
-                temp8.add(chord_i)
+            if not (note % 12 == tonality_rules[SUBDOMINANT] and next_chord[i] % 12 == tonality_rules[LEADING_TONE]):
+                temp8.add(next_chord)
 
     # rule 9 : two consecutive fourths, fifths and octaves are not allowed
     temp9 = set()
-    for chord_it in temp8:
+    for next_chord in temp8:
         int_problem = False
-        for i, note_i in enumerate(current_chord_list):
+        for i, note_current_i in enumerate(current_chord_list):
             for j in range(i, 4):
                 if i != j:
-                    mov = current_chord_list[j] != chord_it[j] or note_i != chord_it[i]
+                    mov = current_chord_list[j] != next_chord[j] or note_current_i != next_chord[i]
 
-                    interval_current = (current_chord_list[j] - note_i) % 12
-                    interval_next = (chord_it[j] - chord_it[i]) % 12
+                    interval_current = (current_chord_list[j] - note_current_i) % 12
+                    interval_next = (next_chord[j] - next_chord[i]) % 12
                     if interval_current == interval_next and mov and \
-                            (interval_current == 0 or interval_current == 5 or interval_current == 7):
+                            (interval_current == UNISON or interval_current == PERFECT_FOURTH_INTERVAL or
+                             interval_current == PERFECT_FIFTH_INTERVAL):
                         int_problem = True
         if not int_problem:
-            temp9.add(chord_it)
+            temp9.add(next_chord)
 
     # rule 10 : direct fourths, fifths and octaves are not allowed
     temp10 = set()
-    for chord_i in temp9:
+    for next_chord in temp9:
         int_problem = False
-        for i, note_i in enumerate(current_chord_list):
+        for i, note_current_i in enumerate(current_chord_list):
             for j in range(i, 4):
                 if i != j:
-                    interval_next = chord_i[j] - chord_i[i]
-                    change_chords_i = chord_i[i] - note_i
-                    change_chords_j = chord_i[j] - current_chord_list[j]
+                    interval_next = next_chord[j] - next_chord[i]
+                    change_chords_i = next_chord[i] - note_current_i
+                    change_chords_j = next_chord[j] - current_chord_list[j]
 
                     if ((change_chords_i > 2 and change_chords_j > 2) or (
                             change_chords_i < -2 and change_chords_j < -2)) \
@@ -414,16 +455,16 @@ def filter_w_rules(current_chord_list, options, is_cadence: bool, tonality_rules
                         int_problem = True
 
         if not int_problem:
-            temp10.add(chord_i)
+            temp10.add(next_chord)
 
     # rule 11 : seventh note and tonic note in the soprano if it is the final cadence
     temp11 = set()
     if (not is_cadence) or current_chord_list[0] % 12 == tonality_rules[LEADING_TONE]:
         return temp10
     else:
-        for chord_i in temp10:
-            if current_chord_list[3] % 12 == tonality_rules[LEADING_TONE] and chord_i[3] % 12 == tonality_rules[TONIC]:
-                temp11.add(chord_i)
+        for next_chord in temp10:
+            if current_chord_list[3] % 12 == tonality_rules[LEADING_TONE] and next_chord[3] % 12 == tonality_rules[TONIC]:
+                temp11.add(next_chord)
 
     return temp11
 
@@ -431,14 +472,15 @@ def filter_w_rules(current_chord_list, options, is_cadence: bool, tonality_rules
 transition = {}  # dictionary that includes transitions from a chord and a bass note to all the possibilities
 
 
-def next_chords(current_chord: Chord, next_note: int, is_cadence: bool, tonality_chords: Tonality):
+def next_chords(current_chord: Chord, next_note: int, next_next_note: int, is_cadence: bool, tonality_chords: Tonality):
     global transition
     """
     Returns all the possible chords that can be harmonised from the current chord and a bass note.
     """
     options = transition.get((current_chord, next_note))
 
-    if options is not None:
+    # FIXME: is_cadence has to be the final cadence, if not, transition will "always" contain the leading note + tonic in the soprano
+    if options is not None and not is_cadence:
         return options
     else:
 
@@ -455,15 +497,17 @@ def next_chords(current_chord: Chord, next_note: int, is_cadence: bool, tonality
         else:
             for note in current_chord_list[1:]:
                 if next_simple_chord.includes(note):
-                    if note % 12 != tonality_chords.value[LEADING_TONE]:
-                        next_chord_list.append(note)
-                    else:
+                    # FIXME: important, maintaining common notes
+                    #if note % 12 != tonality_chords.value[LEADING_TONE]:
+                    #    next_chord_list.append(note)
+                    #else:
                         next_chord_list.append(-1)
                 else:
                     next_chord_list.append(-1)
 
             options = filter_w_rules(current_chord_list,
                                      complete_transition(current_chord_list, next_chord_list, next_simple_chord),
+                                     next_next_note,
                                      is_cadence,
                                      tonality_chords)
 
@@ -476,8 +520,9 @@ def compose(initial_chord, bass_line, prev_chord_tree, tonality_compose):
     Recursive function that from an initial chord, a bass line and an empty composition tree
     creates a composition tree with all the possible harmonizations.
     """
+    # print("remaining bass length: " + str(len(bass_line)))
     if len(bass_line) > 1:
-        list_next_chords = next_chords(initial_chord, bass_line[0], False, tonality_compose)
+        list_next_chords = next_chords(initial_chord, bass_line[0], bass_line[1], False, tonality_compose)
 
         for chord in list_next_chords:
             chord_type = Chord(chord[0], chord[1], chord[2], chord[3])
@@ -487,7 +532,7 @@ def compose(initial_chord, bass_line, prev_chord_tree, tonality_compose):
 
     else:
         if len(bass_line) == 1:
-            list_next_chords = next_chords(initial_chord, bass_line[0], True, tonality_compose)
+            list_next_chords = next_chords(initial_chord, bass_line[0], -1, True, tonality_compose)
 
             for chord in list_next_chords:
                 chord_type = Chord(chord[0], chord[1], chord[2], chord[3])
@@ -496,25 +541,24 @@ def compose(initial_chord, bass_line, prev_chord_tree, tonality_compose):
 
 
 if __name__ == '__main__':
-    start_chord_do_major = Chord(DO, DO + 2 * OCTAVE, SOL + 2 * OCTAVE, MI + 3 * OCTAVE)
+    # start_chord_do_major = Chord(DO, DO + 2 * OCTAVE, SOL + 2 * OCTAVE, MI + 3 * OCTAVE)
     bass_do_major = [DO, FA, SOL, SI, DO + OCTAVE, FA, LA, FA, SOL, SI, DO + OCTAVE, FA, SOL, DO, SOL, DO]
-    bass_do_major2 = [FA, LA, SI, DO, RE + OCTAVE, MI + OCTAVE, LA, SOL, SI, MI]
+    #bass_do_major2 = [FA, LA, SI, DO, RE + OCTAVE, MI + OCTAVE, LA, SOL, SI, MI]
 
     start_chord_sol_major = Chord(SOL, SI + 1 * OCTAVE, SOL + 2 * OCTAVE, RE + 3 * OCTAVE)
     bass_sol_major = [note + PERFECT_FIFTH_INTERVAL for note in bass_do_major]
 
-    start_chord_la_minor = Chord(LA, DO + 2 * OCTAVE, MI + 2 * OCTAVE, LA + 2 * OCTAVE)
+    start_chord_la_minor = Chord(LA, DO + 2 * OCTAVE, LA + 2 * OCTAVE, MI + 3 * OCTAVE)
     bass_la_minor = [LA, RE, MI, SOL_S_LA_F, LA + OCTAVE, RE, FA, RE, MI, SOL_S_LA_F, LA + OCTAVE, RE, MI, LA, MI, LA]
+    bass_la_minor_debug_rule_7 = [LA, FA, MI, LA, MI, FA]
 
-    start_chord_la_minor = Chord(RE_S_MI_F, DO + 2 * OCTAVE, MI + 2 * OCTAVE, LA + 2 * OCTAVE)
-    bass_la_minor = [LA, RE, MI, SOL_S_LA_F, LA + OCTAVE, RE, FA, RE, MI, SOL_S_LA_F, LA + OCTAVE, RE, MI, LA, MI, LA]
 
-    tonality = Tonality.MI_F_MAJOR
+    tonality = Tonality.SOL_MAJOR
+    start_chord = start_chord_sol_major
+    bass = bass_sol_major
 
-    start_chord = Chord(SOL_S_LA_F, DO + 2 * OCTAVE, SOL_S_LA_F + 2 * OCTAVE, RE_S_MI_F + 3 * OCTAVE)
-    bass = [3 for note in bass_do_major2]
-
-    print(start_chord.check_ranges())
+    print(start_chord_la_minor.check_abs_ranges())
+    print(start_chord_la_minor.check_inter_ranges())
 
     compositionTree = Node(start_chord, 1, [])
     compose(start_chord, bass[1:], compositionTree, tonality)

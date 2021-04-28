@@ -10,8 +10,9 @@ bass_do_major2 = [FA, LA, SI, DO, RE + OCTAVE, MI + OCTAVE, LA, SOL, SI, MI]
 start_chord_sol_major = Chord(SOL, SI + 1 * OCTAVE, SOL + 2 * OCTAVE, RE + 3 * OCTAVE)
 bass_sol_major = [note + PERFECT_FIFTH_INTERVAL for note in bass_do_major]
 
-start_chord_la_minor = Chord(LA, DO + 2 * OCTAVE, MI + 2 * OCTAVE, LA + 2 * OCTAVE)
+start_chord_la_minor = Chord(LA, DO + 2 * OCTAVE, LA + 2 * OCTAVE, MI + 3 * OCTAVE)
 bass_la_minor = [LA, RE, MI, SOL_S_LA_F, LA + OCTAVE, RE, FA, RE, MI, SOL_S_LA_F, LA + OCTAVE, RE, MI, LA, MI, LA]
+bass_la_minor_debug_rule_7 = [LA, FA, MI, LA, MI, FA]
 
 tonality = Tonality.LA_MINOR
 start_chord = start_chord_la_minor
