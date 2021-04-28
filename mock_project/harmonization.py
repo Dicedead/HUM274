@@ -395,6 +395,7 @@ def compose(initial_chord, bass_line, prev_chord_tree: Node):
                 leaf = Leaf(chord_type, prev_chord_tree.depth + 1)
                 prev_chord_tree.add_child(leaf)
 
+
 if __name__ == '__main__':
     start_chord = Chord(DO, DO + 2 * OCTAVE, SOL + 2 * OCTAVE, MI + 3 * OCTAVE)
     bass = [DO, FA, SOL, SI, DO+OCTAVE, FA, LA, FA, SOL, SI, DO+OCTAVE, FA, SOL, DO, SOL, DO]
