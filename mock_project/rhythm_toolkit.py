@@ -2,10 +2,11 @@ from fractions import Fraction
 from music21 import midi, note, stream, instrument, meter, key
 from math import fabs
 
+
 # NOTEBOOK BASICS #################################
 
 def get_quarter_length():
-    return 1/ 4
+    return 1 / 4
 
 
 def percussion_hit(duration, pitch="C4"):
