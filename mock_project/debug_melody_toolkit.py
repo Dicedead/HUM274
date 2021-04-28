@@ -64,27 +64,16 @@ def combine_voices(length: int, rhythm, *voices, inst=None, time_sig='4/4'):
     return score
 
 
-def select_path_in_tree(l_sys_string: str, char_list: list, length: int, composition_tree: Node):
+def select_path_in_tree(length: int, composition_tree: Node):
 
     curr_node = composition_tree
     path = [curr_node.root]
-    print(type(curr_node))
-    print(isinstance(curr_node, Node))
-    print("------")
-
-    chord_node = Node(Chord(0, 1, 2, 4), 1, [])
-
-
 
     for i in range(length):
 
-        if isinstance(curr_node, Leaf):
-            print("yes")
-            path.append(curr_node.root)
-            break
+        # FIXME: WHY LAST NODE AND THE FOLLOWING LEAF ARE THE SAME?
 
-        elif not isinstance(curr_node, Leaf):
-            print("no")
+        if isinstance(curr_node, Node):
             list_index = list(range(0, len(curr_node.children)))
             random.shuffle(list_index)
             index = 0
@@ -98,17 +87,4 @@ def select_path_in_tree(l_sys_string: str, char_list: list, length: int, composi
             curr_node = curr_node.children[index]
             path.append(curr_node.root)
 
-        else:
-            print("oof")
     return path
-
-
-if __name__ == '__main__':
-    start_chord = Chord(DO, DO + 2 * OCTAVE, SOL + 2 * OCTAVE, MI + 3 * OCTAVE)
-    # bass_line = [DO, FA, SOL, SI, DO, DO, LA, FA, SOL, SOL, DO, FA, SOL, DO, DO]
-    bass_line = [DO, FA, SOL, SI, DO, DO, LA]
-    compositionTree = Node(start_chord, 1, [])
-
-    compose(start_chord, bass_line[1:], compositionTree)
-    print(compositionTree.level())
-    print(to_arrays(select_path_in_tree(run_complex_for(4), chars_complex(), compositionTree)))

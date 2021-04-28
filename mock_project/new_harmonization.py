@@ -50,52 +50,56 @@ def new_tonality_flat(prev_tonality):
 
 class Tonality(Enum):
     DO_MAJOR = [DO, RE, MI, FA, SOL, LA, SI]
-    # A_MINOR = [LA, SI, DO, RE, MI, FA, SOL_S_LA_F]
+    LA_MINOR = [LA, SI, DO, RE, MI, FA, SOL_S_LA_F]
+
+    # TONALITIES WITH SHARP :
 
     SOL_MAJOR = new_tonality_sharp(DO_MAJOR)
-    # MI_MINOR = new_tonality_sharp(A_MINOR)
+    MI_MINOR = new_tonality_sharp(LA_MINOR)
 
     RE_MAJOR = new_tonality_sharp(SOL_MAJOR)
-    # SI_MINOR = new_tonality_sharp(MI_MINOR)
+    SI_MINOR = new_tonality_sharp(MI_MINOR)
 
     LA_MAJOR = new_tonality_sharp(RE_MAJOR)
-    # FA_S_MINOR = new_tonality_sharp(SI_MINOR)
+    FA_S_MINOR = new_tonality_sharp(SI_MINOR)
 
     MI_MAJOR = new_tonality_sharp(LA_MAJOR)
-    # DO_S_MINOR = new_tonality_sharp(FA_S_MINOR)
+    DO_S_MINOR = new_tonality_sharp(FA_S_MINOR)
 
     SI_MAJOR = new_tonality_sharp(MI_MAJOR)
-    # SOL_S_MINOR = new_tonality_sharp(DO_S_MINOR)
+    SOL_S_MINOR = new_tonality_sharp(DO_S_MINOR)
 
     FA_S_MAJOR = new_tonality_sharp(SI_MAJOR)
-    # RE_S_MINOR = new_tonality_sharp(SOL_S_MINOR)
+    RE_S_MINOR = new_tonality_sharp(SOL_S_MINOR)
 
     DO_S_MAJOR = new_tonality_sharp(FA_S_MAJOR)
-    # LA_S_MINOR = new_tonality_sharp(RE_S_MINOR)
+    LA_S_MINOR = new_tonality_sharp(RE_S_MINOR)
+
+    # TONALITIES WITH FLAT :
 
     FA_MAJOR = [FA, SOL, LA, LA_S_SI_F, DO, RE, MI]
-    # RE_MINOR = [RE, MI, FA, SOL, LA, LA_S_SI_F, DO_S_RE_F]
+    RE_MINOR = [RE, MI, FA, SOL, LA, LA_S_SI_F, DO_S_RE_F]
 
     SI_F_MAJOR = new_tonality_flat(FA_MAJOR)
-    # SOL_MINOR = new_tonality_flat(RE_MINOR)
+    SOL_MINOR = new_tonality_flat(RE_MINOR)
 
     MI_F_MAJOR = new_tonality_flat(SI_F_MAJOR)
-    # DO_MINOR = new_tonality_flat(SOL_MINOR)
+    DO_MINOR = new_tonality_flat(SOL_MINOR)
 
     LA_F_MAJOR = new_tonality_flat(MI_F_MAJOR)
-    # FA_MINOR = new_tonality_flat(DO_MINOR)
+    FA_MINOR = new_tonality_flat(DO_MINOR)
 
     RE_F_MAJOR = new_tonality_flat(LA_F_MAJOR)
-    # SI_F_MINOR = new_tonality_flat(FA_MINOR)
+    SI_F_MINOR = new_tonality_flat(FA_MINOR)
 
     SOL_F_MAJOR = new_tonality_flat(RE_F_MAJOR)
-    # MI_F_MINOR = new_tonality_flat(SI_F_MINOR)
+    MI_F_MINOR = new_tonality_flat(SI_F_MINOR)
 
     DO_F_MAJOR = new_tonality_flat(SOL_F_MAJOR)
-    # LA_F_MINOR = new_tonality_flat(MI_F_MINOR)
+    LA_F_MINOR = new_tonality_flat(MI_F_MINOR)
 
     FA_F_MAJOR = new_tonality_flat(DO_F_MAJOR)
-    # RE_F_MINOR = new_tonality_flat(LA_F_MINOR)
+    RE_F_MINOR = new_tonality_flat(LA_F_MINOR)
 
 
 noteOf = {DO: "Do",
@@ -290,6 +294,7 @@ def complete_transition(current_chord_list, next_chord_list,
 def filter_w_rules(current_chord_list, options, is_cadence: bool, tonality_rules_input: Tonality):
 
     # FIXME: check augmented intervals!! (SOL MAJOR: fa# - do descending)
+    # FIXME: CHANGE RULES FOR MINOR TONALITIES!
 
     tonality_rules = tonality_rules_input.value
 
@@ -491,13 +496,25 @@ def compose(initial_chord, bass_line, prev_chord_tree, tonality_compose):
 
 
 if __name__ == '__main__':
-
     start_chord_do_major = Chord(DO, DO + 2 * OCTAVE, SOL + 2 * OCTAVE, MI + 3 * OCTAVE)
     bass_do_major = [DO, FA, SOL, SI, DO + OCTAVE, FA, LA, FA, SOL, SI, DO + OCTAVE, FA, SOL, DO, SOL, DO]
+    bass_do_major2 = [FA, LA, SI, DO, RE + OCTAVE, MI + OCTAVE, LA, SOL, SI, MI]
 
-    start_chord = Chord(SOL, SI + 1 * OCTAVE, SOL + 2 * OCTAVE, RE + 3 * OCTAVE)
-    bass = [note + PERFECT_FIFTH_INTERVAL for note in bass_do_major]
-    tonality = Tonality.SOL_MAJOR
+    start_chord_sol_major = Chord(SOL, SI + 1 * OCTAVE, SOL + 2 * OCTAVE, RE + 3 * OCTAVE)
+    bass_sol_major = [note + PERFECT_FIFTH_INTERVAL for note in bass_do_major]
+
+    start_chord_la_minor = Chord(LA, DO + 2 * OCTAVE, MI + 2 * OCTAVE, LA + 2 * OCTAVE)
+    bass_la_minor = [LA, RE, MI, SOL_S_LA_F, LA + OCTAVE, RE, FA, RE, MI, SOL_S_LA_F, LA + OCTAVE, RE, MI, LA, MI, LA]
+
+    start_chord_la_minor = Chord(RE_S_MI_F, DO + 2 * OCTAVE, MI + 2 * OCTAVE, LA + 2 * OCTAVE)
+    bass_la_minor = [LA, RE, MI, SOL_S_LA_F, LA + OCTAVE, RE, FA, RE, MI, SOL_S_LA_F, LA + OCTAVE, RE, MI, LA, MI, LA]
+
+    tonality = Tonality.MI_F_MAJOR
+
+    start_chord = Chord(SOL_S_LA_F, DO + 2 * OCTAVE, SOL_S_LA_F + 2 * OCTAVE, RE_S_MI_F + 3 * OCTAVE)
+    bass = [3 for note in bass_do_major2]
+
+    print(start_chord.check_ranges())
 
     compositionTree = Node(start_chord, 1, [])
     compose(start_chord, bass[1:], compositionTree, tonality)
