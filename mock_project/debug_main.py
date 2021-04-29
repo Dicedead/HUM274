@@ -14,15 +14,18 @@ start_chord_la_minor = Chord(LA, DO + 2 * OCTAVE, LA + 2 * OCTAVE, MI + 3 * OCTA
 bass_la_minor = [LA, RE, MI, SOL_S_LA_F, LA, RE, FA, RE, MI, SOL_S_LA_F, LA, RE, MI, LA, MI, LA]
 bass_la_minor_debug_rule_7 = [LA, FA, MI, LA, MI, FA]
 
-tonality = Tonality.LA_MINOR
+key = Key.LA_MINOR
 start_chord = start_chord_la_minor
 bass = bass_la_minor
+
 
 voices = [[], [], [], []]
 compositionTree = Node(start_chord, 1, [])
 
-compose(start_chord, bass[1:], compositionTree, tonality)
-print(compositionTree.level())
+compose(start_chord, bass[1:], compositionTree, key)
+print(compositionTree)
+print("compositionTree's level: " + str(compositionTree.level()))
+
 path = select_path_in_tree(len(bass), compositionTree)
 path = to_arrays(path)[0:len(path)]
 for i in range(4):
@@ -34,3 +37,4 @@ parts = combine_voices(len(voices[0]), [], voices,
 parts.write('midi', 'midi/output_final.mid')
 parts.show()
 print("Done!")
+
