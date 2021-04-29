@@ -1,7 +1,6 @@
 import random
 from music21 import note, stream, duration, instrument
 from new_harmonization import *
-from L_sys_rules_depot import *
 
 
 def translate(int_note, dur):
@@ -65,26 +64,24 @@ def combine_voices(length: int, rhythm, *voices, inst=None, time_sig='4/4'):
 
 
 def select_path_in_tree(length: int, composition_tree: Node):
-
     curr_node = composition_tree
     path = [curr_node.root]
 
     for i in range(length):
-
         # FIXME: WHY LAST NODE AND THE FOLLOWING LEAF ARE THE SAME?
 
         if isinstance(curr_node, Node):
             list_index = list(range(0, len(curr_node.children)))
             random.shuffle(list_index)
+
             index = 0
+            index_elem = list_index[index]
 
-            while index < len(list_index) - 1 and curr_node.children[index].total_depth() != length:
-                print('index: ' + str(index))
-                print('max index: ' + str(len(curr_node.children)))
-                print(curr_node.children[index].total_depth())
+            while index < len(list_index) - 1 and curr_node.children[index_elem].total_depth() != length:
                 index += 1
+                index_elem = list_index[index]
 
-            curr_node = curr_node.children[index]
+            curr_node = curr_node.children[index_elem]
             path.append(curr_node.root)
 
     return path
