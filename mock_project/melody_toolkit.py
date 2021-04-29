@@ -46,9 +46,9 @@ def combine_voices(length: int, rhythm, *voices, inst=None, time_sig='4/4'):
     :return stream of chords
     """
 
-    voices = voices[0]
     if inst is None:
-        inst = [instrument.BrassInstrument() if i % 2 == 0 else instrument.Piano() for i in range(len(voices))]
+        inst = [instrument.Piano()]
+    voices = voices[0]
     score = stream.Score(timeSignature=time_sig)
 
     parts = [stream.Part() for _ in range(len(voices))]
