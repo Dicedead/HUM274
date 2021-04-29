@@ -36,13 +36,12 @@ def to_arrays(voices):
     return [bass, tenor, alto, soprano]
 
 
-def combine_voices(length: int, rhythm, *voices, inst=None, time_sig='4/4'):
+def combine_voices_harm(length: int, rhythm, *voices, inst=None, time_sig='4/4'):
     """
-    :param time_sig: well..
-    :param inst: list of used instruments
     :param length: common length of voices to consider
-    :param rhythm: rhythmic line: sequence of durations
     :param voices: sequences of integers encoding notes
+    :param inst: instruments
+    :param time_sig: time signature
     :return stream of chords
     """
 
@@ -63,7 +62,7 @@ def combine_voices(length: int, rhythm, *voices, inst=None, time_sig='4/4'):
     return score
 
 
-def select_path_in_tree(length: int, composition_tree: Node):
+def select_path_in_tree_harm(length: int, composition_tree: Node):
     curr_node = composition_tree
     path = [curr_node.root]
 
