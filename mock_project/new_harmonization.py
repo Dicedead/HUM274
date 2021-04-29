@@ -63,7 +63,7 @@ OCTAVE = 12
 ###########################################
 
 EPSILON = 7  # allowed delta between two notes from different adjacent voices when looking for a transition
-MAINTAIN_COMMON_NOTES = False  # prioritizes maintaining the common notes when chaining two chords
+MAINTAIN_COMMON_NOTES = False  # prioritizes maintaining the common notes when chaining two chords // !!!!!
 OVERTAKING_CADENCE = 0  # max. overtaking allowed between two voices when there is a cadence
 OVERTAKING_NO_CADENCE = -4  # max. overtaking allowed between two voices when there is not a cadence
 
@@ -431,7 +431,7 @@ def filter_w_rules(current_chord_list, options, next_next_degree, is_final_caden
     temp = temp2 if RULE_2_ACTIVE else temp
 
     ####################################################################
-    # RULE 3 : LEADING NOTE GOES TO TONIC IF CURRENT GRADE IS V OR VII
+    # RULE 3 : LEADING NOTE GOES TO TONIC IF CURRENT GRADE IS III, V OR VII
     #          AND THE FOLLOWING IS I, IV OR VI
     temp3 = set()
     for next_chord in temp:
@@ -440,7 +440,7 @@ def filter_w_rules(current_chord_list, options, next_next_degree, is_final_caden
         current_fund = Chord.simple_of(next_chord[0], key_degrees).fundamental
 
         # determines whether the leading notes is considered active (need to resolve)
-        leading_active = (prev_fund == key_degrees[DOMINANT] or prev_fund == key_degrees[LEADING_TONE]) \
+        leading_active = (prev_fund == key_degrees[DOMINANT] or prev_fund == key_degrees[LEADING_TONE] or prev_fund == key_degrees[MEDIANT]) \
                          and (current_fund == key_degrees[TONIC] or current_fund == key_degrees[SUBDOMINANT]
                               or current_fund == key_degrees[SUBMEDIANT])
 
@@ -702,23 +702,29 @@ def next_chords(current_chord: Chord, next_note: int, next_next_note: int, is_fi
 # Recursive method that from an initial_chord, a bass_line, a ChordTree (prev_chord_tree) and a tonality (tonality_compose)
 # computes algorithmically the composition (computes all the possible harmonizations) and inserts it into the tree.
 # A node (or a leaf) of the chord tree keeps track of its previous chord.
-def compose(initial_chord, bass_line, prev_chord_tree, tonality_compose):
+def compose(initial_chord, bass_line, prev_chord_tree, tonality_compose, prev_cadence):
+    ton_value = tonality_compose.value
+    current_cadence = False
 
     if len(bass_line) > 1:
+        if len(bass_line) == 2:
+            current_cadence = bass_line[0] % 12 == ton_value[DOMINANT] or bass_line[0] % 12 == ton_value[LEADING_TONE] \
+                            or (bass_line[0] % 12 == ton_value[MEDIANT])
+
         # All the possible next chords from the current chord
-        list_next_chords = next_chords(initial_chord, bass_line[0], bass_line[1], False, tonality_compose)
+        list_next_chords = next_chords(initial_chord, bass_line[0], bass_line[1], prev_cadence, tonality_compose)
 
         for chord in list_next_chords:
             chord_type = Chord(chord[0], chord[1], chord[2], chord[3])
             node = Node(chord_type, prev_chord_tree.depth + 1, [])
             # Adds the next chord to a node and continues the composition
             prev_chord_tree.add_child(node)
-            compose(chord_type, bass_line[1:], node, tonality_compose)
+            compose(chord_type, bass_line[1:], node, tonality_compose, current_cadence)
 
     else:
         if len(bass_line) == 1:
             # Notifies next_chords that this is the final cadence
-            list_next_chords = next_chords(initial_chord, bass_line[0], -1, True, tonality_compose)
+            list_next_chords = next_chords(initial_chord, bass_line[0], -1, prev_cadence, tonality_compose)
 
             for chord in list_next_chords:
                 chord_type = Chord(chord[0], chord[1], chord[2], chord[3])
