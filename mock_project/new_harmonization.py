@@ -72,7 +72,7 @@ RULE_1_ACTIVE = True  # rule 1 : no duplication of the leading note
 RULE_2_ACTIVE = True  # rule 2 : chords are in (absolute) range
 RULE_3_ACTIVE = True  # rule 3 : leading note goes to tonic if grade is V or VII and the following is I, IV or VI
 RULE_4_ACTIVE = True  # rule 4 : a note cannot appear more than 2 times in a chord
-RULE_5_ACTIVE = True  # rule 5 : the fifth note cannot be repeated
+RULE_5_ACTIVE = True  # rule 5 : the fifth note has to be repeated for VII degree and cannot be repeated otherwise
 RULE_6_ACTIVE = True  # rule 6 : all notes of the chord are present
 RULE_7_ACTIVE = True  # rule 7 : third duplication (not I, IV, V) and V -> VI (m - M), VI -> V (m)
 RULE_8_ACTIVE = True  # rule 8 : fourth augmented interval not allowed
@@ -385,12 +385,12 @@ def complete_transition(current_chord_list, next_chord_list, next_simple_chord: 
 # key_rules_input (the key).
 #
 # This method sequentially filters the set of all possible options following the more important harmonic rules.
-def filter_w_rules(current_chord_list, options, next_next_degree, is_cadence, key_rules_input):
+# The different rules can be deactivated independently thanks to the corresponding constants.
+def filter_w_rules(current_chord_list, options, next_next_degree, is_final_cadence, key_rules_input):
     key_degrees = key_rules_input.value
 
     # The temporary set that changes with respect to the rules
     temp = options.copy()
-
     ##############################################
     # RULE 0 : NO BIG OVERTAKING BETWEEN VOICES
     temp0 = set()
@@ -402,9 +402,9 @@ def filter_w_rules(current_chord_list, options, next_next_degree, is_cadence, ke
         a_s_interval = next_chord[3] - next_chord[2]
 
         # the allowed overtaking between voices depends on whether there is a cadence or not
-        not_big_overtake_b_t = b_t_interval >= OVERTAKING_NO_CADENCE if is_cadence else b_t_interval >= OVERTAKING_CADENCE
-        not_big_overtake_t_a = t_a_interval >= OVERTAKING_NO_CADENCE if is_cadence else t_a_interval >= OVERTAKING_CADENCE
-        not_big_overtake_a_s = a_s_interval >= OVERTAKING_NO_CADENCE if is_cadence else a_s_interval >= OVERTAKING_CADENCE
+        not_big_overtake_b_t = b_t_interval >= OVERTAKING_NO_CADENCE if is_final_cadence else b_t_interval >= OVERTAKING_CADENCE
+        not_big_overtake_t_a = t_a_interval >= OVERTAKING_NO_CADENCE if is_final_cadence else t_a_interval >= OVERTAKING_CADENCE
+        not_big_overtake_a_s = a_s_interval >= OVERTAKING_NO_CADENCE if is_final_cadence else a_s_interval >= OVERTAKING_CADENCE
 
         if not_big_overtake_b_t and not_big_overtake_t_a and not_big_overtake_a_s:
             temp0.add(next_chord)
@@ -435,120 +435,143 @@ def filter_w_rules(current_chord_list, options, next_next_degree, is_cadence, ke
     #          AND THE FOLLOWING IS I, IV OR VI
     temp3 = set()
     for next_chord in temp:
-        prev_fundamental = Chord.simple_of(current_chord_list[0], key_degrees).fundamental
-        fundamental = Chord.simple_of(next_chord[0], key_degrees).fundamental
 
-        leading_active = (prev_fundamental == key_degrees[DOMINANT] or prev_fundamental == key_degrees[
-            LEADING_TONE]) \
-                         and (fundamental == key_degrees[TONIC] or fundamental == key_degrees[SUBDOMINANT]
-                              or fundamental == key_degrees[SUBMEDIANT])
+        prev_fund = Chord.simple_of(current_chord_list[0], key_degrees).fundamental
+        current_fund = Chord.simple_of(next_chord[0], key_degrees).fundamental
 
-        for i, note in enumerate(current_chord_list):
+        # determines whether the leading notes is considered active (need to resolve)
+        leading_active = (prev_fund == key_degrees[DOMINANT] or prev_fund == key_degrees[LEADING_TONE]) \
+                         and (current_fund == key_degrees[TONIC] or current_fund == key_degrees[SUBDOMINANT]
+                              or current_fund == key_degrees[SUBMEDIANT])
+
+        for i, curr_note in enumerate(current_chord_list):
             if not leading_active or \
-                    (note % 12 == key_degrees[LEADING_TONE] and next_chord[i] % 12 == key_degrees[
-                        TONIC] and leading_active):
+                    (curr_note % 12 == key_degrees[LEADING_TONE] and next_chord[i] % 12 == key_degrees[TONIC]
+                     and leading_active):
                 temp3.add(next_chord)
     temp = temp3 if RULE_3_ACTIVE else temp
 
-    # rule 4 : a note cannot appear more than 2 times in a chord
+    ##################################################################
+    # RULE 4 : A NOTE CANNOT APPEAR MORE THAT 2 TIMES IN A SAME CHORD
     temp4 = set()
     for next_chord in temp:
         simple_notes_list = list(map(lambda x: x % 12, list(next_chord)))
         correct_dupl = True
+
         for note in simple_notes_list:
             if simple_notes_list.count(note) > 2:
                 correct_dupl = False
+
         if correct_dupl:
             temp4.add(next_chord)
     temp = temp4 if RULE_4_ACTIVE else temp
 
-    # rule 5 : the fifth note cannot be repeated
+    #############################################################################################
+    # RULE 5 : THE FIFTH NOTE HAS TO BE REPEATED FOR VII DEGREE AND CANNOT BE REPEATED OTHERWISE
     temp5 = set()
     for next_chord in temp:
+        fund = Chord.simple_of(next_chord[0], key_degrees).fundamental
         fifth = Chord.simple_of(next_chord[0], key_degrees).fifth
         simple_notes_list = list(map(lambda x: x % 12, list(next_chord)))
-        if not simple_notes_list.count(fifth) > 1:
+
+        if fund % 12 == key_degrees[LEADING_TONE]:
+            if simple_notes_list.count(fifth) == 2:
+                temp5.add(next_chord)
+        elif simple_notes_list.count(fifth) < 2:
             temp5.add(next_chord)
     temp = temp5 if RULE_5_ACTIVE else temp
 
-    # rule 6 : all notes of the chord are present
+    ##############################################
+    # RULE 6 : ALL NOTES OF THE CHORD ARE PRESENT
     temp6 = set()
     for next_chord in temp:
-        simple_chord = Chord.simple_of(next_chord[0], key_degrees)
+        simple_next_chord = Chord.simple_of(next_chord[0], key_degrees)
         simple_notes_list = list(map(lambda x: x % 12, list(next_chord)))
-        if simple_chord.fundamental in simple_notes_list and simple_chord.third in simple_notes_list \
-                and simple_chord.fifth in simple_notes_list:
+
+        if simple_next_chord.fundamental in simple_notes_list and simple_next_chord.third in simple_notes_list \
+                and simple_next_chord.fifth in simple_notes_list:
             temp6.add(next_chord)
     temp = temp6 if RULE_6_ACTIVE else temp
 
-    # rule 7 : third duplication is authorised when the degree is not I, IV and V; and is mandatory when
-    #   V -> VI chaining in major and minor tonalities (3rd dup. in VI)
-    #   VI -> V chaining in minor tonality (3rd dup. in VI)
-    #   VII -> I (already implemented because of the 1st and 5st rules, 3rd dup. in VII)
+    ########################################################################################################
+    # RULE 7 : THIRD DUPLICATION IS AUTHORISED WHEN THE DEGREE IS NOT I, IV AND V; AND IS MANDATORY WHEN
+    #               V -> VI chaining in major and minor tonalities (3rd duplicated in VI)
+    #               VI -> V chaining in minor tonality (3rd duplicated in VI)
+    #               VII -> I (already implemented because of the 1st and 5st rules, 3rd dup. in VII)
     temp7 = set()
     for next_chord in temp:
-        prev_fundamental = Chord.simple_of(current_chord_list[0], key_degrees).fundamental
-
-        fundamental = Chord.simple_of(next_chord[0], key_degrees).fundamental
+        prev_fund = Chord.simple_of(current_chord_list[0], key_degrees).fundamental
+        next_fund = Chord.simple_of(next_chord[0], key_degrees).fundamental
         third = Chord.simple_of(next_chord[0], key_degrees).third
         simple_notes_list = list(map(lambda x: x % 12, list(next_chord)))
 
         third_two_times = simple_notes_list.count(third) == 2
 
         # third duplication not recommended
-        third_not_recom = fundamental == key_degrees[TONIC] or fundamental == key_degrees[SUBDOMINANT] \
-                          or fundamental == key_degrees[DOMINANT]
+        third_not_recom = next_fund == key_degrees[TONIC] or next_fund == key_degrees[SUBDOMINANT] \
+                          or next_fund == key_degrees[DOMINANT]
 
         # V -> VI chaining in major and minor tonalities (3rd dup. in VI)
-        V_VI = prev_fundamental == key_degrees[DOMINANT] and fundamental == key_degrees[SUBMEDIANT]
+        v_vi = prev_fund == key_degrees[DOMINANT] and next_fund == key_degrees[SUBMEDIANT]
 
         # VI -> V chaining in minor tonality (3rd dup. in VI)
-        VI_V_minor = fundamental == key_degrees[SUBMEDIANT] and \
+        vi_v_minor = next_fund == key_degrees[SUBMEDIANT] and \
                      next_next_degree == key_degrees[DOMINANT] and not is_major(key_degrees)
 
-        mandatory_third = V_VI or VI_V_minor
+        mandatory_third = v_vi or vi_v_minor
 
         if (mandatory_third and third_two_times) or (not mandatory_third and not (third_not_recom and third_two_times)):
             temp7.add(next_chord)
     temp = temp7 if RULE_7_ACTIVE else temp
 
-    # rule 8 : fourth augmented interval not allowed
+    #################################################
+    # RULE 8 : FOURTH AUGMENTED INTERVAL NOT ALLOWED
     temp8 = set()
     for next_chord in temp:
 
         has_augm_interval = False
         for i, current_note_i in enumerate(current_chord_list):
 
+            # Current note (and next note) are the leading note
             current_note_leading = current_note_i % 12 == key_degrees[LEADING_TONE]
             next_note_leading = next_chord[i] % 12 == key_degrees[LEADING_TONE]
 
+            # Ascending augmented forth interval
             aug_forth_asc = current_note_i % 12 == key_degrees[SUBDOMINANT] and \
                             next_note_leading and \
                             next_chord[i] - current_note_i == 6
 
+            # Descending augmented forth interval
             aug_forth_des = current_note_leading and \
                             next_chord[i] % 12 == key_degrees[SUBDOMINANT] and \
                             current_note_i - next_chord[i] == 6
 
+            # Ascending augmented second interval
             aug_second_asc = current_note_i % 12 == key_degrees[SUBMEDIANT] and \
                              next_note_leading and \
                              next_chord[i] - current_note_i == 3
 
+            # Descending augmented second interval
             aug_second_des = current_note_leading and \
                              next_chord[i] % 12 == key_degrees[SUBDOMINANT] and \
                              current_note_i - next_chord[i] == 3
 
+            # Ascending augmented fifth interval
             aug_fifth_asc = current_note_i % 12 == key_degrees[MEDIANT] and \
                             next_note_leading and \
                             next_chord[i] - current_note_i == 8
 
+            # Descending augmented fifth interval
             aug_fifth_des = current_note_leading and \
                             next_chord[i] % 12 == key_degrees[MEDIANT] and \
                             current_note_i - next_chord[i] == 8
 
+            # If the key is major, augmented intervals can only be fourths
             if is_major(key_degrees):
                 if aug_forth_asc or aug_forth_des:
                     has_augm_interval = True
+
+            # If the key is minor, augmented intervals can be fourths, fifths and seconds
             else:
                 if aug_forth_asc or aug_forth_des or aug_second_asc or aug_second_des \
                         or aug_fifth_asc or aug_fifth_des:
@@ -556,16 +579,20 @@ def filter_w_rules(current_chord_list, options, next_next_degree, is_cadence, ke
 
         if not has_augm_interval:
             temp8.add(next_chord)
-
     temp = temp8 if RULE_8_ACTIVE else temp
 
-    # rule 9 : two consecutive fourths, fifths and octaves are not allowed
+    #########################################################################
+    # RULE 9 : TWO CONSECUTIVE FOURTHS, FIFTHS AND OCTAVES ARE NOT ALLOWED
     temp9 = set()
     for next_chord in temp:
-        int_problem = False
+        interval_problem = False
+
+        # Compares for the not allowed consecutive intervals between the two chords
+        # for all the possible pairs of voices (voice i and a higher voice j)
         for i, note_current_i in enumerate(current_chord_list):
             for j in range(i, 4):
                 if i != j:
+                    # There is no common note
                     mov = current_chord_list[j] != next_chord[j] or note_current_i != next_chord[i]
 
                     interval_current = (current_chord_list[j] - note_current_i) % 12
@@ -573,57 +600,68 @@ def filter_w_rules(current_chord_list, options, next_next_degree, is_cadence, ke
                     if interval_current == interval_next and mov and \
                             (interval_current == UNISON or interval_current == PERFECT_FOURTH_INTERVAL or
                              interval_current == PERFECT_FIFTH_INTERVAL):
-                        int_problem = True
-        if not int_problem:
+                        interval_problem = True
+        if not interval_problem:
             temp9.add(next_chord)
     temp = temp9 if RULE_9_ACTIVE else temp
 
-    # rule 10 : direct fourths, fifths and octaves are not allowed
+    #########################################################################
+    # RULE 10 : DIRECT FOURTHS, FIFTHS AND OCTAVES ARE NOT ALLOWED
     temp10 = set()
     for next_chord in temp:
-        int_problem = False
+        interval_problem = False
+
+        # Compares for the not allowed direct intervals between the two chords
+        # for all the possible pairs of voices (voice i and a higher voice j)
         for i, note_current_i in enumerate(current_chord_list):
             for j in range(i, 4):
                 if i != j:
-                    interval_next = next_chord[j] - next_chord[i]
+
+                    # An interval is considered direct if both voices change in the same direction
+                    # and both for more of a tone
+                    interval_next = (next_chord[j] - next_chord[i]) % 12
                     change_chords_i = next_chord[i] - note_current_i
                     change_chords_j = next_chord[j] - current_chord_list[j]
 
                     if ((change_chords_i > 2 and change_chords_j > 2) or (
                             change_chords_i < -2 and change_chords_j < -2)) \
-                            and (interval_next == 0 or interval_next == 5 or interval_next == 7):
-                        int_problem = True
+                            and (interval_next == UNISON or interval_next == PERFECT_FOURTH_INTERVAL
+                                 or interval_next == PERFECT_FIFTH_INTERVAL):
+                        interval_problem = True
 
-        if not int_problem:
+        if not interval_problem:
             temp10.add(next_chord)
     temp = temp10 if RULE_10_ACTIVE else temp
 
-    # rule 11 : leading note and tonic note in the soprano if it is the final cadence
+    ###################################################################################
+    # RULE 11 : LEADING NOTE AND TONIC NOTE IN THE SOPRANO IF IT IS THE FINAL CADENCE
     temp11 = set()
-    if (not is_cadence) or current_chord_list[0] % 12 == key_degrees[LEADING_TONE]:
+    if (not is_final_cadence) or current_chord_list[0] % 12 == key_degrees[LEADING_TONE]:
         temp11 = temp10
     else:
         for next_chord in temp:
-            if current_chord_list[3] % 12 == key_degrees[LEADING_TONE] and next_chord[3] % 12 == key_degrees[
-                TONIC]:
+            if current_chord_list[3] % 12 == key_degrees[LEADING_TONE] and next_chord[3] % 12 == key_degrees[TONIC]:
                 temp11.add(next_chord)
     temp = temp11 if RULE_11_ACTIVE else temp
 
     return temp
 
 
-transition = {}  # dictionary that includes transitions from a chord and a bass note to all the possibilities
+# Dictionary that includes transitions from a chord and a the next bass note to all the possible next chords
+transition = {}
 
 
-def next_chords(current_chord: Chord, next_note: int, next_next_note: int, is_cadence: bool, tonality_chords: Tonality):
+# Method that from a current_chord, the next_note of the bass, the next_next_note of the bass,
+# a boolean is_final_cadence and a key computes all the possible next chords.
+def next_chords(current_chord: Chord, next_note: int, next_next_note: int, is_final_cadence: bool, key_for_chords: Key):
     global transition
     """
     Returns all the possible chords that can be harmonised from the current chord and a bass note.
     """
     options = transition.get((current_chord, next_note))
 
-    # FIXME: is_cadence has to be the final cadence, if not, transition will "always" contain the leading note + tonic in the soprano
-    if options is not None and not is_cadence:
+    # If the transition is already computed, it uses it and does not again the computation (dynamic programming)
+    if options is not None and not is_final_cadence:
         return options
 
     else:
@@ -631,77 +669,59 @@ def next_chords(current_chord: Chord, next_note: int, next_next_note: int, is_ca
 
         # Keep common notes
         current_chord_list = current_chord.to_list()
+        # Already copies the bass note
         next_chord_list = [next_note]
+        next_simple_chord = Chord.simple_of(next_note, key_for_chords.value)
 
-        next_simple_chord = Chord.simple_of(next_note, tonality_chords.value)
-
+        # If the constant MAINTAIN_COMMON_NOTES is true, we keep the common notes in the following chord if possible
+        # For the undetermined notes, it adds -1
         if MAINTAIN_COMMON_NOTES:
             if current_chord.fundamental() == next_note:
                 options.add(tuple(current_chord.to_list()))
             else:
                 for note in current_chord_list[1:]:
-                    if next_simple_chord.includes(note) and note % 12 != tonality_chords.value[LEADING_TONE]:
+                    if next_simple_chord.includes(note) and note % 12 != key_for_chords.value[LEADING_TONE]:
                         next_chord_list.append(note)
                     else:
                         next_chord_list.append(-1)
         else:
             next_chord_list = [next_note, -1, -1, -1]
 
+        # Computes of the possible options for the next chord thanks to the filter_w_rules method
         options = filter_w_rules(current_chord_list,
                                  complete_transition(current_chord_list, next_chord_list, next_simple_chord),
                                  next_next_note,
-                                 is_cadence,
-                                 tonality_chords)
+                                 is_final_cadence,
+                                 key_for_chords)
 
+        # Adds the current transition to the global dictionary
         transition[(current_chord, next_note)] = tuple(opt for opt in options)
         return transition[(current_chord, next_note)]
 
 
+# Recursive method that from an initial_chord, a bass_line, a ChordTree (prev_chord_tree) and a tonality (tonality_compose)
+# computes algorithmically the composition (computes all the possible harmonizations) and inserts it into the tree.
+# A node (or a leaf) of the chord tree keeps track of its previous chord.
 def compose(initial_chord, bass_line, prev_chord_tree, tonality_compose):
-    """
-    Recursive function that from an initial chord, a bass line and an empty composition tree
-    creates a composition tree with all the possible harmonizations.
-    """
+
     if len(bass_line) > 1:
+        # All the possible next chords from the current chord
         list_next_chords = next_chords(initial_chord, bass_line[0], bass_line[1], False, tonality_compose)
 
         for chord in list_next_chords:
             chord_type = Chord(chord[0], chord[1], chord[2], chord[3])
             node = Node(chord_type, prev_chord_tree.depth + 1, [])
+            # Adds the next chord to a node and continues the composition
             prev_chord_tree.add_child(node)
             compose(chord_type, bass_line[1:], node, tonality_compose)
 
     else:
         if len(bass_line) == 1:
+            # Notifies next_chords that this is the final cadence
             list_next_chords = next_chords(initial_chord, bass_line[0], -1, True, tonality_compose)
 
             for chord in list_next_chords:
                 chord_type = Chord(chord[0], chord[1], chord[2], chord[3])
+                # As it is the final chord, creates a leaf instead of a node
                 leaf = Leaf(chord_type, prev_chord_tree.depth + 1)
                 prev_chord_tree.add_child(leaf)
-
-
-if __name__ == '__main__':
-    # start_chord_do_major = Chord(DO, DO + 2 * OCTAVE, SOL + 2 * OCTAVE, MI + 3 * OCTAVE)
-    bass_do_major = [DO, FA, SOL, SI, DO + OCTAVE, FA, LA, FA, SOL, SI, DO + OCTAVE, FA, SOL, DO, SOL, DO]
-    # bass_do_major2 = [FA, LA, SI, DO, RE + OCTAVE, MI + OCTAVE, LA, SOL, SI, MI]
-
-    start_chord_sol_major = Chord(SOL, SI + 1 * OCTAVE, SOL + 2 * OCTAVE, RE + 3 * OCTAVE)
-    bass_sol_major = [note + PERFECT_FIFTH_INTERVAL for note in bass_do_major]
-
-    start_chord_la_minor = Chord(LA, DO + 2 * OCTAVE, LA + 2 * OCTAVE, MI + 3 * OCTAVE)
-    bass_la_minor = [LA, RE, MI, SOL_S_LA_F, LA, RE, FA, RE, MI, SOL_S_LA_F, LA, RE, MI, LA, MI, LA]
-    bass_la_minor_debug_rule_7 = [LA, FA, MI, LA, MI, FA]
-
-    key = Tonality.LA_MINOR
-    start_chord = start_chord_la_minor
-    bass = bass_la_minor
-
-    print(start_chord_la_minor.check_abs_ranges())
-    print(start_chord_la_minor.check_inter_ranges())
-
-    compositionTree = Node(start_chord, 1, [])
-    compose(start_chord, bass[1:], compositionTree, key)
-
-    print(compositionTree)
-    print(compositionTree.level())

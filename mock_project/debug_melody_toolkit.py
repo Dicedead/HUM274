@@ -1,7 +1,6 @@
 import random
 from music21 import note, stream, duration, instrument
 from new_harmonization import *
-from L_sys_rules_depot import *
 
 
 def translate(int_note, dur):
@@ -69,7 +68,6 @@ def select_path_in_tree(length: int, composition_tree: Node):
     path = [curr_node.root]
 
     for i in range(length):
-
         # FIXME: WHY LAST NODE AND THE FOLLOWING LEAF ARE THE SAME?
 
         if isinstance(curr_node, Node):
