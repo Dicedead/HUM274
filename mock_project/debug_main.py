@@ -16,27 +16,33 @@ bass_la_minor = [LA, RE, MI, SOL_S_LA_F, LA, RE, FA, RE, MI, SOL_S_LA_F, LA, RE,
 bass_la_minor2 = [LA, RE, MI, LA, RE, FA, MI, SOL_S_LA_F, LA, SI, DO + OCTAVE, RE + OCTAVE, MI + OCTAVE, LA + OCTAVE, SI + OCTAVE, MI + OCTAVE, LA + OCTAVE]
 bass_la_minor_debug_rule_7 = [LA, FA, MI, LA, MI, FA]
 
-key = Key.DO_MAJOR
-start_chord = start_chord_do_major
-bass = bass_do_major3
+
+def create_composition(key, start_chord, bass, ):
+    voices = [[], [], [], []]
+    compositionTree = Node(start_chord, 1, [])
+
+    compose(start_chord, bass[1:], compositionTree, key, False)
+    print(compositionTree)
+    print("compositionTree's level: " + str(compositionTree.level()))
+
+    path = select_path_in_tree(len(bass), compositionTree)
+    path = to_arrays(path)[0:len(path)]
+    for i in range(4):
+        voices[i].extend(path[i])
+
+    parts = combine_voices(len(voices[0]), [], voices,
+                           inst=[instrument.Piano(), instrument.Piano(), instrument.Piano(), instrument.Piano()])
+
+    parts.write('midi', 'midi/output_final.mid')
+    parts.show()
+    print("Done!")
+
+create_composition(Key.SOL_MAJOR, start_chord_sol_major, bass_sol_major)
+create_composition(Key.LA_MINOR, start_chord_la_minor, bass_la_minor)
 
 
-voices = [[], [], [], []]
-compositionTree = Node(start_chord, 1, [])
 
-compose(start_chord, bass[1:], compositionTree, key, False)
-print(compositionTree)
-print("compositionTree's level: " + str(compositionTree.level()))
 
-path = select_path_in_tree(len(bass), compositionTree)
-path = to_arrays(path)[0:len(path)]
-for i in range(4):
-    voices[i].extend(path[i])
 
-parts = combine_voices(len(voices[0]), [], voices,
-                       inst=[instrument.Piano(), instrument.Piano(), instrument.Piano(), instrument.Piano()])
 
-parts.write('midi', 'midi/output_final.mid')
-parts.show()
-print("Done!")
 
