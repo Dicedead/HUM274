@@ -349,27 +349,43 @@ class Empty(ChordTree):
 #          HARMONISATION METHODS          #
 ###########################################
 
-# Auxiliary method which returns the cartesian product of chords (as lists) for all the simple_options.
 def all_options(simple_options):
+    """
+    Auxiliary method which returns the cartesian product of chords (as lists) for all the simple_options.
+    :param simple_options: a list which contains lists of possible elements for each voice
+    :return: the set containing all the combinations of the elements of simple_options
+    """
     return {i for i in product(*simple_options)}
 
 
-# Auxiliary method that returns a range (of notes) within the epsilon value.
 def all_in_epsilon(note):
+    """
+    Auxiliary method that returns a range (of notes) within the epsilon value.
+    :param note: the "central" note
+    :return: the range of note
+    """
     return range(max(0, note - EPSILON), note + EPSILON + 1)
 
 
-# Auxiliary method that completes and returns all the possible transitions between the current chord
-# and the next chord, both represented by a list.
-# For the notes of the next_chord that are not defined, it creates a list with all the possible values.
-# After that, it computes and returns all the different possibilities of chords.
+
 def complete_transition(current_chord_list, next_chord_list, next_simple_chord: SimplifiedChord):
+    """
+    Auxiliary method that completes and returns all the possible transitions between the current chord
+    and the sketch of the next chord.
+    For the notes of the next_chord that are not defined, it creates a list with all the possible values.
+    After that, it computes and returns all the different possibilities of chords.
+
+    :param current_chord_list: the current chord, of type list
+    :param next_chord_list: the sketch of the next chord, of type list
+    :param next_simple_chord: the next chord in simplified format
+    :return:a set of all the possible next chords
+    """
     simple_options = []
 
     for i, note in enumerate(next_chord_list):
 
         if note == -1:
-            # adds the list for the notes within the range and filters it by the notes included in the next chord
+            # Adds the list for the notes within the range and filters it by the notes included in the next chord
             simple_options.append(list(filter(lambda x: next_simple_chord.includes(x),
                                               list(all_in_epsilon(current_chord_list[i])))))
         else:
@@ -378,14 +394,19 @@ def complete_transition(current_chord_list, next_chord_list, next_simple_chord: 
     return all_options(simple_options)  # computes all the options from the simple list (of length 4) of lists
 
 
-# From current_chord_list (the list that represents the current chord), options (the set of all the possible chords
-# chain with the current chord), next_next_degree (the note that represents the degree two positions ahead, -1 if there
-# is not), is_final_cadence (boolean that determines if the next_chord is the final chord of a cadence) and
-# key_rules_input (the key).
-#
-# This method sequentially filters the set of all possible options following the more important harmonic rules.
-# The different rules can be deactivated independently thanks to the corresponding constants.
+
 def filter_w_rules(current_chord_list, options, next_next_degree, is_final_cadence, key_rules_input):
+    """
+    This method sequentially filters the set of all possible options following the more important harmonic rules.
+    The different rules can be deactivated independently thanks to the corresponding constants.
+
+    :param current_chord_list: the list that represents the current chord
+    :param options: the set of all the possible chords for the next chord
+    :param next_next_degree: the note that represents the degree two positions ahead, -1 if there is not
+    :param is_final_cadence: boolean that determines if the next_chord is the final chord of a cadence
+    :param key_rules_input: the key
+    :return: set of the filtered options
+    """
     key_degrees = key_rules_input.value
 
     # The temporary set that changes with respect to the rules
@@ -651,9 +672,17 @@ def filter_w_rules(current_chord_list, options, next_next_degree, is_final_caden
 transition = {}
 
 
-# Method that from a current_chord, the next_note of the bass, the next_next_note of the bass,
-# a boolean is_final_cadence and a key computes all the possible next chords.
 def next_chords(current_chord: Chord, next_note: int, next_next_note: int, is_final_cadence: bool, key_for_chords: Key):
+    """
+    Computes all the possible next chords for the next note
+
+    :param current_chord: the current chord
+    :param next_note: the next note from the bass to chain
+    :param next_next_note: the following note of the next note
+    :param is_final_cadence: boolean that indicates if it is the final cadence
+    :param key_for_chords: the key of the harmonization
+    :return: the set of all the possible next_chords for the next note
+    """
     global transition
 
     options = transition.get((current_chord, next_note))
@@ -699,11 +728,18 @@ def next_chords(current_chord: Chord, next_note: int, next_next_note: int, is_fi
             return tuple(opt for opt in options)
 
 
-# Recursive method that from an initial_chord, a bass_line, a ChordTree (prev_chord_tree), a tonality (tonality_compose)
-# and a boolean (prev_cadence, which indicates that the previous chord started a cadence)
-# computes algorithmically the composition (computes all the possible harmonizations) and inserts it into the tree.
-# A node (or a leaf) of the chord tree keeps track of its previous chord.
 def compose(initial_chord, bass_line, prev_chord_tree, prev_cadence, tonality_compose):
+    """
+    Recursive method that computes algorithmically the composition (computes all the possible harmonizations)
+    and inserts it into the tree. A node (or a leaf) of the chord tree keeps track of its previous chord.
+
+    :param initial_chord: initial chord
+    :param bass_line: bass line (a list of notes)
+    :param prev_chord_tree: the chord tree
+    :param prev_cadence: boolean that indicates whether this following chord is the last for the final cadence
+    :param tonality_compose: key of the harmonization
+    :return: void function, as it stores the results in the tree
+    """
     ton_value = tonality_compose.value
     next_cadence = False
 

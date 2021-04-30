@@ -5,7 +5,7 @@ from new_harmonization import *
 
 def translate(int_note, dur):
     """
-    Given an integer value of a note, get a corresponding music21.note object
+    Given an integer value of a note, gets a corresponding music21.note object
     :param int_note: integer value of the note
     :param dur: duration of desired note
     :return music21.note
@@ -38,6 +38,7 @@ def to_arrays(voices):
 
 def combine_voices_harm(length: int, rhythm, *voices, inst=None, time_sig='4/4'):
     """
+    Combines the voices with music21 objects.
     :param length: common length of voices to consider
     :param voices: sequences of integers encoding notes
     :param inst: instruments
@@ -63,6 +64,12 @@ def combine_voices_harm(length: int, rhythm, *voices, inst=None, time_sig='4/4')
 
 
 def select_path_in_tree_harm(length: int, composition_tree: Node):
+    """
+    From a chord tree, randomly chooses a path (of an expected length)
+    :param length: the expected length of the path
+    :param composition_tree: the composition tree
+    :return: the path
+    """
     curr_node = composition_tree
     path = [curr_node.root]
 
