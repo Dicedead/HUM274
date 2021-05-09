@@ -1,24 +1,25 @@
 from harmonisation.harmonisation import *
 
+
 def to_arrays(voices):
     """
     :param voices: list of chords
-    :return decomposed voices: each chord is split into 4 notes, and 4 distinct parts are returned
     """
     bass = []
     tenor = []
     alto = []
     soprano = []
 
-    for chord in voices:
-        bass.append(chord.b)
-        tenor.append(chord.t)
-        alto.append(chord.a)
-        soprano.append(chord.s)
+    for tetrad in voices:
+        bass.append(tetrad.b)
+        tenor.append(tetrad.t)
+        alto.append(tetrad.a)
+        soprano.append(tetrad.s)
 
     return [bass, tenor, alto, soprano]
 
-def combine_voices_harm(length: int, rhythm, *voices, inst=None, time_sig='4/4'):
+
+def combine_voices_harm(length: int, *voices, inst=None, time_sig='4/4'):
     """
     Combines the voices with music21 objects.
     :param length: common length of voices to consider
@@ -56,6 +57,7 @@ def select_path_in_tree_harm(length: int, composition_tree: Node):
     path = [curr_node.root]
 
     for i in range(length):
+        # FIXME: WHY LAST NODE AND THE FOLLOWING LEAF ARE THE SAME?
 
         if isinstance(curr_node, Node):
             list_index = list(range(0, len(curr_node.children)))
