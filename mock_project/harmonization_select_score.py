@@ -1,6 +1,6 @@
 import random
 from music21 import note, stream, duration, instrument
-from new_harmonization import *
+from harmonization import *
 
 
 def translate(int_note, dur):

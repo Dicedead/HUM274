@@ -1,6 +1,6 @@
-from debug_melody_toolkit import *
+from harmonization_select_score import *
 from custom_instruments import *
-from new_harmonization import *
+from harmonization import *
 
 start_chord_do_major = Chord(DO + OCTAVE, DO + 2 * OCTAVE, SOL + 2 * OCTAVE, MI + 3 * OCTAVE)
 bass_do_major = [DO, FA, SOL, SI, DO + OCTAVE, FA, LA, FA, SOL, SI, DO + OCTAVE, FA, SOL, DO, SOL, DO]
