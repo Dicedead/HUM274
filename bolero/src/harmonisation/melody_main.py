@@ -45,3 +45,7 @@ parts_1 = create_composition(Key.LA_MINOR, start_chord_la_minor, bass_la_minor)
 
 parts_1.show()
 play(parts_1)
+
+parts_2 = create_composition(Key.LA_MINOR, start_chord_la_minor, bass_la_minor)
+parts_2.show()
+play(parts_2)
