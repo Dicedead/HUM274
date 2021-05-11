@@ -21,11 +21,11 @@ def notes_array(tonality, bass, first_chord, length_composition):
 
 if __name__ == "__main__":
 
-    length_piece = 30
+    length_piece = 10
     voices = notes_array(Key.DO_MAJOR, bass_do_major, start_chord_do_major, length_piece)
     string_res = run_complex_for(4)
     sequence = sequence_from_string_complex(string_res)
-    instruments = [instrument.Piano(), instrument.Piano(), instrument.Accordion(), instrument.Violin()]
+    instruments = [instrument.Piano(), instrument.Piano(), instrument.Piano(), instrument.Piano()]
 
     parts = combine_voices(len(voices[0]), sequence, voices, inst=instruments, time_sig="3/4")
 

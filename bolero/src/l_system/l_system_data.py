@@ -3,17 +3,15 @@ from util import *
 
 
 def rules_complex():
-    rule_a = Rule("A", "BB[F+E-D+A]FF")
-    rule_b = Rule("B", "D[E]-C""D[E]-C")
-    rule_c = Rule("C", "CD+C-CF-")
-    rule_d = Rule("D", "AE+[D-D]D+ED")
-    rule_e = Rule("E", "[E+-]B")
-    rule_f = Rule("F", "F+[-B]B[[A]EF]")
-    return LSystem(rule_a, rule_b, rule_c, rule_d, rule_e, rule_f)
+    rule_a = Rule("A", "BB[+-D+A")
+    rule_b = Rule("B", "D[-C""D[-C")
+    rule_c = Rule("C", "CD+C-C-")
+    rule_d = Rule("D", "A+[D-DD+D")
+    return LSystem(rule_a, rule_b, rule_c, rule_d)
 
 
 def initial_complex():
-    return "F]AEE-B"
+    return "A+B"
 
 
 def run_complex_for(n, show_mode=False):
@@ -22,7 +20,7 @@ def run_complex_for(n, show_mode=False):
 
 def sequence_from_string_complex(string: str):
     """
-    To use with chars: A, B, C, D, E, F, +, -, [, ]
+    To use with chars: A, B, C, D, E, F, +, -, [
     A: half note
     B: quarter
     C: eighth
@@ -32,7 +30,6 @@ def sequence_from_string_complex(string: str):
     +: add previous and next duration
     -: make previous note a rest (value: -1 * duration of rest)
     [: extend previous duration by 50%
-    ]: divide previous duration by 2
     :param string: input string
     :return: sequence of durations (floats)
     """
@@ -45,25 +42,17 @@ def sequence_from_string_complex(string: str):
         elif c == 'C':
             tb.append(1 / 2)
         elif c == 'D':
-            tb.append(1 / 4)
-        elif c == 'E':
-            tb.append(1 / 3)
-        elif c == 'F':
-            tb.append(1 / 5)
+            tb.append(3 / 4)
         elif c == '[':
             if len(tb) > 0:
                 tb[-1] = tb[-1] + 0.5 * tb[-1]
-        elif c == ']':
-            if len(tb) > 0:
-                if tb[-1] > float(1.0 / 1024):
-                    tb[-1] = tb[-1] / 2
         elif c == '-':
             if len(tb) > 0:
                 tb[-1] = -tb[-1]
         return tb[-1]
 
     def is_duration_char(c: str):
-        return c in ['A', 'B', 'C', 'D', 'E', 'F']
+        return c in ['A', 'B', 'C', 'D']
 
     str_arr = [c for c in string]
     tab = []
@@ -86,7 +75,6 @@ def sequence_from_string_complex(string: str):
 
         str_arr = str_arr[nb_chars_read:]  # remove chars read
     return tab
-
 
 
 def rules_bolero():
