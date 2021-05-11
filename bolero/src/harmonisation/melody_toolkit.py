@@ -57,7 +57,6 @@ def select_path_in_tree_harm(length: int, composition_tree: Node):
     path = [curr_node.root]
 
     for i in range(length):
-        # FIXME: WHY LAST NODE AND THE FOLLOWING LEAF ARE THE SAME?
 
         if isinstance(curr_node, Node):
             list_index = list(range(0, len(curr_node.children)))

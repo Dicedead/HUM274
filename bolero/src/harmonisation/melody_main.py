@@ -1,4 +1,4 @@
-from melody_toolkit import *
+from harmonisation.melody_toolkit import *
 
 start_chord_do_major = Chord(DO + OCTAVE, DO + 2 * OCTAVE, SOL + 2 * OCTAVE, MI + 3 * OCTAVE)
 bass_do_major = [DO, FA, SOL, SI, DO + OCTAVE, FA, LA, FA, SOL, SI, DO + OCTAVE, FA, SOL, DO, SOL, DO]
@@ -35,17 +35,18 @@ def create_composition(key, start_chord, bass):
     parts = combine_voices_harm(len(voices[0]), voices,
                                 inst=[instrument.Piano(), instrument.Piano(), instrument.Piano(), instrument.Piano()])
 
-    parts.write('midi', 'midi/output_final.mid')
-    parts.show()
+    # parts.write('midi', 'midi/output_final.mid')
+    # parts.show()
     return parts
 
 
-# create_composition(Key.SOL_MAJOR, start_chord_sol_major, bass_sol_major)
-parts_1 = create_composition(Key.LA_MINOR, start_chord_la_minor, bass_la_minor)
+if __name__ == "__main__":
+    # create_composition(Key.SOL_MAJOR, start_chord_sol_major, bass_sol_major)
+    parts_1 = create_composition(Key.LA_MINOR, start_chord_la_minor, bass_la_minor)
 
-parts_1.show()
-play(parts_1)
+    parts_1.show()
+    play(parts_1)
 
-parts_2 = create_composition(Key.LA_MINOR, start_chord_la_minor, bass_la_minor)
-parts_2.show()
-play(parts_2)
+    parts_2 = create_composition(Key.LA_MINOR, start_chord_la_minor, bass_la_minor)
+    parts_2.show()
+    play(parts_2)
