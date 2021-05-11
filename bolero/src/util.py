@@ -2,7 +2,6 @@ from math import fabs
 from itertools import product
 from enum import Enum
 import matplotlib.pyplot as plt
-
 plt.rcParams["figure.figsize"] = (20, 3)
 import scipy.io.wavfile
 import numpy as np
