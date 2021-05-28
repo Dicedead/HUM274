@@ -146,3 +146,101 @@ def sequence_from_string_bolero(string: str):
     }
 
     return [note_durations.get(c) for c in string]
+
+def rules_slow():
+    rule_a = Rule("A", "BB[+-D+A")
+    rule_b = Rule("B", "D[-""D[-")
+    rule_d = Rule("D", "A+[D-DD+D")
+    return LSystem(rule_a, rule_b, rule_d)
+
+
+def initial_slow():
+    return "A+B"
+
+
+def run_slow_for(n, show_mode=False):
+    return rules_complex().run(initial_complex(), n, show_mode)
+
+
+def sequence_from_string_slow(string: str):
+    """
+    To use with chars: A, B, D, -, [
+    A: half note
+    B: quarter
+    D: dotted eighth
+    +: add previous and next duration
+    -: make previous note a rest (value: -1 * duration of rest)
+    [: extend previous duration by 50%
+    :param string: input string
+    :return: sequence of durations (floats)
+    """
+
+    def char_to_duration(c: str, tb: list):
+        if c == 'A':
+            tb.append(2)
+        elif c == 'B':
+            tb.append(1)
+        elif c == 'D':
+            tb.append(3 / 4)
+        elif c == '[':
+            if len(tb) > 0:
+                tb[-1] = tb[-1] + 0.5 * tb[-1]
+        elif c == '-':
+            if len(tb) > 0:
+                tb[-1] = -tb[-1]
+        return tb[-1]
+
+    str_arr = [c for c in string]
+    tab = []
+    while not len(str_arr) == 0:
+        char_to_duration(str_arr[0], tab)
+        str_arr = str_arr[1:]  # remove chars read
+    return tab
+
+
+def rules_slow_2():
+    rule_a = Rule("A", "[BB[+-A+A")
+    rule_b = Rule("B", "BB[-""AB[-")
+    return LSystem(rule_a, rule_b)
+
+
+def initial_slow_2():
+    return "A+B"
+
+
+def run_slow_2_for(n, show_mode=False):
+    return rules_complex().run(initial_complex(), n, show_mode)
+
+
+def sequence_from_string_slow_2(string: str):
+    """
+    To use with chars: A, B, -, [
+    A: half note
+    B: quarter
+    +: add previous and next duration
+    -: make previous note a rest (value: -1 * duration of rest)
+    [: extend previous duration by 50%
+    :param string: input string
+    :return: sequence of durations (floats)
+    """
+
+    def char_to_duration(c: str, tb: list):
+        if c == 'A':
+            tb.append(2)
+        elif c == 'B':
+            tb.append(1.5)
+        elif c == '[':
+            if len(tb) > 0:
+                tb[-1] = tb[-1] + 0.5 * tb[-1]
+        elif c == '-':
+            if len(tb) > 0:
+                tb[-1] = -tb[-1]
+        return tb[-1]
+
+    str_arr = [c for c in string]
+    tab = []
+    while not len(str_arr) == 0:
+        char_to_duration(str_arr[0], tab)
+        str_arr = str_arr[1:]  # remove chars read
+
+    return tab

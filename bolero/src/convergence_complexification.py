@@ -23,10 +23,10 @@ if __name__ == "__main__":
 
     length_piece = 10
     voices = notes_array(Key.DO_MAJOR, bass_do_major, start_chord_do_major, length_piece)
-    string_res = run_complex_for(4)
-    sequence = sequence_from_string_complex(string_res)
+    string_res = run_slow_for(4)
+    sequence = sequence_from_string_slow(string_res)
     instruments = [instrument.Piano(), instrument.Piano(), instrument.Piano(), instrument.Piano()]
 
     parts = combine_voices(len(voices[0]), sequence, voices, inst=instruments, time_sig="3/4")
 
-    parts.write('midi', 'midi' + platform_str + 'convergence_complexification.mid')
+    parts.write('midi', 'midi' + platform_str + 'convergence_complexification_slow_2.mid')
