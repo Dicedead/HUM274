@@ -1,3 +1,8 @@
+import math
+
+import music21.stream
+import numpy as np
+
 from harmonisation.melody_main import *
 from l_system.rhythm_main import *
 from harmonisation.melody_toolkit import *
@@ -19,14 +24,29 @@ def notes_array(tonality, bass, first_chord, length_composition):
     return voices_arrays
 
 
+def combine_score_and_rhythm(curr_score: music21.stream.Score, curr_rhythm):
+    new_score = music21.stream.Score()
+    for curr_part in curr_score.parts:
+        new_part = music21.stream.Part()
+        for i in range(len(curr_part.notes)):
+            new_part.append(note.Note(nameWithOctave=curr_part.notes[i].nameWithOctave,
+                                      duration=dur.Duration(math.fabs(curr_rhythm[i]))))
+        new_score.insert(0, new_part)
+    return new_score
+
+
 if __name__ == "__main__":
 
-    length_piece = 10
-    voices = notes_array(Key.DO_MAJOR, bass_do_major, start_chord_do_major, length_piece)
-    string_res = run_slow_for(4)
-    sequence = sequence_from_string_slow(string_res)
+    voices = converter.parse('midi/input_midis/3_16.mid')
+    # half_length = math.floor(len(voices.parts[0].notes)/2)
+    string_res = run_complex_for(4)
+    # sequence = sequence_from_string_slow(run_slow_for(4))[0:half_length] +
+    # sequence_from_string_complex_orig(string_res)
+    sequence = sequence_from_string_complex(string_res)
+    # instruments = [instrument.Violoncello(), instrument.Viola(), instrument.Piano(), instrument.Violin()]
     instruments = [instrument.Piano(), instrument.Piano(), instrument.Piano(), instrument.Piano()]
 
-    parts = combine_voices(len(voices[0]), sequence, voices, inst=instruments, time_sig="3/4")
+    score_comp = combine_score_and_rhythm(voices, sequence)
 
-    parts.write('midi', 'midi' + platform_str + 'convergence_complexification_slow_2.mid')
+    score_comp.write('midi', 'midi' + platform_str +
+                     'convergence_complexification_complex_kept.mid')
