@@ -1,5 +1,9 @@
 from util import *
 
+"""
+The number of levels a  quarter note gives us its relative probability, probability which we increase more and more 
+during the iterations.
+"""
 
 # simulating brownian motion from t=0 to t=TIME_HORIZON
 TIME_HORIZON = 700.0

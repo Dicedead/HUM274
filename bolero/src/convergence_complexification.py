@@ -12,7 +12,6 @@ def notes_array(tonality, bass, first_chord, length_composition):
     voices_arrays = [[], [], [], []]
     next_start_chord = first_chord
     for j in range(length_composition):
-
         next_compos_tree = Node(next_start_chord, 1, [])
         compose(next_start_chord, bass[1:], next_compos_tree, False, tonality)
         path = select_path_in_tree_harm(len(bass), next_compos_tree)
