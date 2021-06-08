@@ -17,6 +17,7 @@ from music21 import duration as dur
 from music21.note import Rest
 import platform
 from copy import deepcopy
+from music21 import converter
 
 platform_str = "\\" if platform.platform()[:7] == "Windows" else "/"
 

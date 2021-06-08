@@ -1,5 +1,18 @@
 from util import *
 
+"""
+To create Gaussian noise, we first started with the idea to create a series of many sine waves, each represented each by
+numpy arrays with a certain number of values per second (using the Nyquist rate of the upper limit human hearing range).
+These sine waves would then be rescaled according to the specific type of Gaussian noise required. 
+Unsurprisingly in retrospect, this proved several orders of magnitude too costly to compute.
+
+The solution was to actually start in the frequency domain, have a vector values to sample the human hearing range, 
+rescaling them depending on the required sound colour (e.g. 1/frequency for pink noise), then simply using an inverse 
+Fourier transform to go back to the time domain. This method bypasses the calculation of nearly 20,000 sine waves, 
+each of a very large size (44100), and replaces it by a single computation on an array of size 
+`44100 * required duration` followed by an inverse Fourier transform.
+"""
+
 # Using the Nyquist-Shannon theorem
 FRAMERATE = 44100
 
