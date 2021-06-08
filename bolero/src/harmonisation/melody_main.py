@@ -1,5 +1,4 @@
 from harmonisation.melody_toolkit import *
-from custom_instruments import *
 from harmonisation.harmonisation import *
 from music21 import converter
 
