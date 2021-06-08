@@ -5,6 +5,15 @@ import music21.stream
 from l_system.rhythm_main import *
 from harmonisation.melody_toolkit import *
 
+"""
+Thankfully, *Boléro*'s main rhythm is very easy and repetitive and can be cut down in to 3 parts A, B & C, organised in 
+the sequence: ABAC. A groups the first 3 sextuplets and the following eighth note, B is a group of 3 sextuplets followed 
+by 3 eighth notes, and C encompasses 9 sextuplets followed by a final eighth note. After some initial turbulence, 
+the tail of the produced string becomes several repetitions of the ABAC motives. A, B & C are encoded as ``L-System`` 
+rules in our code, with a twist: instead of sextuplets, sixteenth notes are used in A, turning the *Boléro*'s time 
+signature into a 7/8. Then, the decision was later made to ease back into the *Boléro*'s 3/4, for reasons stated below.
+"""
+
 if __name__ == "__main__":
     bolero_rhythm = sequence_from_string_bolero(run_bolero_for(3, False))
     quarter_length = math.floor(len(bolero_rhythm)/4)
