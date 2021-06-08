@@ -1,3 +1,5 @@
+import random
+from music21 import note, stream, duration, instrument
 from harmonisation.harmonisation import *
 
 
@@ -73,3 +75,4 @@ def select_path_in_tree_harm(length: int, composition_tree: Node):
             path.append(curr_node.root)
 
     return path
+

@@ -1,4 +1,5 @@
-from util import *
+from itertools import product
+from enum import Enum
 
 """
 We decided to do the implementation from scratch, i.e. not to use ``music21`` library elements as notes or chords, 
@@ -177,6 +178,8 @@ class Key(Enum):
     DO_F_MAJOR = new_key_flat(SOL_F_MAJOR)
     LA_F_MINOR = new_key_flat(MI_F_MINOR)
 
+    FA_F_MAJOR = new_key_flat(DO_F_MAJOR)
+    RE_F_MINOR = new_key_flat(LA_F_MINOR)
 
 ###########################################
 #             DATA STRUCTURES             #
